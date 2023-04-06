@@ -1,0 +1,2 @@
+class RequiredDataMissing(Exception):
+    pass

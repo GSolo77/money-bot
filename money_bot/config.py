@@ -1,0 +1,15 @@
+import logging
+import os
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
+)
+
+TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
+TELEGRAM_DEVELOPER_ID = int(os.environ["TELEGRAM_DEVELOPER_ID"])
+TELEGRAM_MANAGER_ID = int(os.environ["TELEGRAM_MANAGER_ID"])
