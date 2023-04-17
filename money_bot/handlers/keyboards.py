@@ -1,9 +1,9 @@
-from telegram import ReplyKeyboardMarkup, InlineKeyboardMarkup, \
-    InlineKeyboardButton
+from typing import Type
 
-from messages.common import MainButtons, ApprovalButtons, PayMethod
-from messages.exchange import ExchangeType, ExchangeCurrency, ExchangeNetwork
-from messages.transfer import ReceiveMethod
+from telegram import ReplyKeyboardMarkup, InlineKeyboardMarkup, \
+    InlineKeyboardButton, KeyboardButton
+
+from messages.common import MainButtons, StrEnumAsCallback
 
 MAIN_KEYBOARD = ReplyKeyboardMarkup(
     keyboard=(
@@ -11,60 +11,38 @@ MAIN_KEYBOARD = ReplyKeyboardMarkup(
         (MainButtons.abroad_transfer, MainButtons.question),
     ),
     one_time_keyboard=True,
+    resize_keyboard=True,
+)
+CANCEL_KEYBOARD = ReplyKeyboardMarkup.from_button(
+    KeyboardButton(MainButtons.back_to_menu),
+    resize_keyboard=True,
+    one_time_keyboard=True,
+    is_persistent=True,
 )
 
-EXCHANGE_INIT_KEYBOARD = InlineKeyboardMarkup(
-    inline_keyboard=(
-        (InlineKeyboardButton(**ExchangeType.buy_usdt.as_callback),),
-        (InlineKeyboardButton(**ExchangeType.sell_usdt.as_callback),)
-    ),
-)
 
-EXCHANGE_CURRENCY_KEYBOARD = InlineKeyboardMarkup(
-    inline_keyboard=(
-        (
-            InlineKeyboardButton(**ExchangeCurrency.rub.as_callback),
-            InlineKeyboardButton(**ExchangeCurrency.usd.as_callback),
-        ),
-        (
-            InlineKeyboardButton(**ExchangeCurrency.eur.as_callback),
-            InlineKeyboardButton(**ExchangeCurrency.cny.as_callback),
-        ),
-    ),
-)
+def build_inline_keyboard(
+        buttons_enum: Type[StrEnumAsCallback],
+        *,
+        rows: int,
+        include_names: list['str'] = None,
+        exclude_names: list['str'] = None,
+) -> InlineKeyboardMarkup:
+    if include_names and exclude_names:
+        raise ValueError('Can not pass both include_names and exclude_names')
 
-PAY_METHOD_KEYBOARD = InlineKeyboardMarkup(
-    inline_keyboard=(
-        (InlineKeyboardButton(**PayMethod.cash.as_callback),),
-        (InlineKeyboardButton(**PayMethod.bank.as_callback),)
-    ),
-)
+    if include_names:
+        enums = filter(lambda item: item.name in include_names, buttons_enum)
+    elif exclude_names:
+        enums = filter(
+            lambda item: item.name not in exclude_names, buttons_enum
+        )
+    else:
+        enums = buttons_enum
 
-RECEIVE_METHOD_KEYBOARD = InlineKeyboardMarkup(
-    inline_keyboard=(
-        (InlineKeyboardButton(**ReceiveMethod.cash.as_callback),),
-        (InlineKeyboardButton(**ReceiveMethod.bank.as_callback),),
-    ),
-)
+    inline_buttons = [
+        InlineKeyboardButton(**enum_item.as_callback) for enum_item in enums
+    ]
+    chunked_inline_buttons = [inline_buttons[i::rows] for i in range(rows)]
 
-EXCHANGE_NETWORK_KEYBOARD = InlineKeyboardMarkup(
-    inline_keyboard=(
-        (
-            InlineKeyboardButton(**ExchangeNetwork.trc20.as_callback),
-            InlineKeyboardButton(**ExchangeNetwork.bep20.as_callback),
-        ),
-        (
-            InlineKeyboardButton(**ExchangeNetwork.erc20.as_callback),
-            InlineKeyboardButton(**ExchangeNetwork.skip.as_callback),
-        ),
-    ),
-)
-
-APPROVE_KEYBOARD = InlineKeyboardMarkup(
-    inline_keyboard=(
-        (
-            InlineKeyboardButton(**ApprovalButtons.approve.as_callback),
-            InlineKeyboardButton(**ApprovalButtons.abort.as_callback),
-        ),
-    ),
-)
+    return InlineKeyboardMarkup(inline_keyboard=chunked_inline_buttons)

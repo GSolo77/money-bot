@@ -1,10 +1,12 @@
 from enum import StrEnum
 
 from telegram import Message
-from telegram.ext.filters import MessageFilter
+from telegram.ext import filters
+
+from messages.common import MainButtons
 
 
-class ButtonsFilter(MessageFilter):
+class ButtonsFilter(filters.MessageFilter):
     __slots__ = ("buttons_texts",)
 
     def __init__(self, *buttons: StrEnum) -> None:
@@ -17,3 +19,11 @@ class ButtonsFilter(MessageFilter):
         return any(
             message.text.startswith(button) for button in self.buttons_texts
         )
+
+
+TEXT_NOT_CMND_NOR_BTN = (
+    filters.TEXT & ~filters.COMMAND & ~ButtonsFilter(*MainButtons)
+)
+ALL_NOT_CMND_NOR_BTN = (
+    filters.ALL & ~filters.COMMAND & ~ButtonsFilter(*MainButtons)
+)

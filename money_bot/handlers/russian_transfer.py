@@ -1,120 +1,154 @@
+import asyncio
 import logging
 
 from telegram import Update
 from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, \
     MessageHandler, filters, CallbackQueryHandler
 
-from filters import ButtonsFilter
-from handlers.cancel import cancel
-from handlers.keyboards import MAIN_KEYBOARD, PAY_METHOD_KEYBOARD, \
-    RECEIVE_METHOD_KEYBOARD, APPROVE_KEYBOARD
-from messages.common import MainButtons, PayMethod, ApprovalButtons
+from handlers.common import default_fallbacks
+from handlers.keyboards import MAIN_KEYBOARD, build_inline_keyboard, \
+    CANCEL_KEYBOARD
+from messages.common import MainButtons, PayMethod, ApprovalButtons, \
+    AMOUNT_PROMPT
 from messages.transfer import RUSSIAN_TRANSFER_MESSAGE, ReceiveMethod
+from services.utils import to_number, SLEEP_TIMEOUT
+from services.filters import TEXT_NOT_CMND_NOR_BTN
+from services.manager import send_user_request_to_manager
 
 logger = logging.getLogger(__name__)
 USER_DATA_KEY = 'russian_transfer'
-AMOUNT, ORIGIN, DESTINATION, PAY_METHOD, RECEIVE_METHOD, APPROVE = 8, 9, 10, 11, 12, 13
-STEPS_CALLBACK_MAPPING = {
-    AMOUNT: None,
-    ORIGIN: None,
-    DESTINATION: None,
-    PAY_METHOD: PayMethod,
-    RECEIVE_METHOD: ReceiveMethod,
-}
+AMOUNT, ORIGIN, DESTINATION, PAY_METHOD, RECEIVE_METHOD, APPROVE = range(8, 14)
 
 
-def build_transfer_message(user_data: dict) -> str:
-    pass
-
-
-async def russian_transfer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text(RUSSIAN_TRANSFER_MESSAGE, reply_markup=None)
-    await update.message.reply_text("Введите сумму в числовом формате")
+async def russian_transfer(update: Update,
+                           _: ContextTypes.DEFAULT_TYPE) -> int:
+    await asyncio.sleep(SLEEP_TIMEOUT)
+    await update.message.reply_text(
+        RUSSIAN_TRANSFER_MESSAGE,
+        reply_markup=CANCEL_KEYBOARD,
+    )
+    await update.message.reply_text(AMOUNT_PROMPT)
 
     return AMOUNT
 
 
-async def amount(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    try:
-        number = float(update.message.text)
-    except ValueError:
-        await update.message.reply_text("Введите сумму в числовом формате")
+async def russian_amount(update: Update,
+                         context: ContextTypes.DEFAULT_TYPE) -> int:
+    number, err = to_number(update)
+    if err:
+        await update.message.reply_text(AMOUNT_PROMPT)
         return AMOUNT
 
     context.user_data[USER_DATA_KEY] = {}
-    context.user_data[USER_DATA_KEY][AMOUNT] = number
+    context.user_data[USER_DATA_KEY]['OP'] = (
+        f"Тип операции: {MainButtons.russian_transfer}"
+    )
+    context.user_data[USER_DATA_KEY][AMOUNT] = f"Сумма: {number:.2f} ₽"
     await update.message.reply_text("Введите город отправления")
 
     return ORIGIN
 
 
-async def origin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data[USER_DATA_KEY][ORIGIN] = update.message.text
-    await update.message.reply_text("Введите город получения")
+async def russian_origin(update: Update,
+                         context: ContextTypes.DEFAULT_TYPE) -> int:
+    context.user_data[USER_DATA_KEY][ORIGIN] = (
+        f"Город отправления: {update.message.text.strip().capitalize()}"
+    )
 
-    return DESTINATION
+    exclude_names = [PayMethod.cash_minsk.name]
+    if context.user_data[USER_DATA_KEY][ORIGIN] != "Москва":
+        exclude_names.append(PayMethod.cash_moscow.name)
 
-
-async def destination(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data[USER_DATA_KEY][DESTINATION] = update.message.text
-    await update.message.reply_text("Выберите способ оплаты", reply_markup=PAY_METHOD_KEYBOARD)
+    await update.message.reply_text(
+        "Выберите способ оплаты",
+        reply_markup=build_inline_keyboard(
+            PayMethod,
+            rows=2,
+            exclude_names=exclude_names,
+        ),
+    )
 
     return PAY_METHOD
 
 
-async def pay_method(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def russian_pay_method(update: Update,
+                             context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
-    context.user_data[USER_DATA_KEY][PAY_METHOD] = PayMethod.value_of(query.data)
+    context.user_data[USER_DATA_KEY][PAY_METHOD] = (
+        f"Способ оплаты: {PayMethod.value_of(query.data)}"
+    )
     await query.answer()
-    await query.edit_message_text("Предпочтительный способ получения", reply_markup=RECEIVE_METHOD_KEYBOARD)
+    await query.edit_message_text("Введите город получения")
+
+    return DESTINATION
+
+
+async def russian_destination(update: Update,
+                              context: ContextTypes.DEFAULT_TYPE) -> int:
+    context.user_data[USER_DATA_KEY][DESTINATION] = (
+        f"Город получения: {update.message.text.strip().capitalize()}"
+    )
+
+    await update.message.reply_text(
+        "Предпочтительный способ получения",
+        reply_markup=build_inline_keyboard(ReceiveMethod, rows=2),
+    )
 
     return RECEIVE_METHOD
 
 
-async def receive_method(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def russian_receive_method(update: Update,
+                                 context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
-    context.user_data[USER_DATA_KEY][RECEIVE_METHOD] = ReceiveMethod.value_of(query.data)
+    context.user_data[USER_DATA_KEY][RECEIVE_METHOD] = (
+        f"Способ получения: {ReceiveMethod.value_of(query.data)}"
+    )
     await query.answer()
+    final_request = "\n".join(context.user_data[USER_DATA_KEY].values())
     await query.edit_message_text(
-        f"Ваша заявка:\n{context.user_data[USER_DATA_KEY]}\nПодтвердить?",
-        reply_markup=APPROVE_KEYBOARD,
+        f"Ваша заявка:\n\n{final_request}\n\nПодтвердить?",
+        reply_markup=build_inline_keyboard(ApprovalButtons, rows=1),
     )
 
     return APPROVE
 
 
-async def approve(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def russian_approve(update: Update,
+                          context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
-
-    if query.data == ApprovalButtons.approve.name:
-        text = "Ваша заявка успешно отправлена!"
-    else:
-        text = "Отменено"
 
     await query.answer()
     await query.message.edit_reply_markup(reply_markup=None)
-    await query.message.reply_text(text, reply_markup=MAIN_KEYBOARD)
+    print(f"{USER_DATA_KEY =}")
+    await query.message.reply_text(
+        await send_user_request_to_manager(update, context, USER_DATA_KEY),
+        reply_markup=MAIN_KEYBOARD,
+    )
+    context.user_data.clear()
     return ConversationHandler.END
 
 
 russian_transfer_conv = ConversationHandler(
     entry_points=[
         CommandHandler("russian_transfer", russian_transfer),
-        MessageHandler(filters.Regex(MainButtons.russian_transfer), russian_transfer),
+        MessageHandler(
+            filters.Regex(MainButtons.russian_transfer), russian_transfer,
+        ),
     ],
     states={
-        AMOUNT: [MessageHandler(filters.TEXT, amount)],
-        ORIGIN: [MessageHandler(filters.TEXT, origin)],
-        DESTINATION: [MessageHandler(filters.TEXT, destination)],
-        PAY_METHOD: [CallbackQueryHandler(pay_method)],
-        RECEIVE_METHOD: [CallbackQueryHandler(receive_method)],
-        APPROVE: [CallbackQueryHandler(approve)],
+        AMOUNT: [MessageHandler(TEXT_NOT_CMND_NOR_BTN, russian_amount)],
+        ORIGIN: [MessageHandler(TEXT_NOT_CMND_NOR_BTN, russian_origin)],
+        DESTINATION: [
+            MessageHandler(TEXT_NOT_CMND_NOR_BTN, russian_destination),
+        ],
+        PAY_METHOD: [CallbackQueryHandler(russian_pay_method)],
+        RECEIVE_METHOD: [CallbackQueryHandler(russian_receive_method)],
+        APPROVE: [CallbackQueryHandler(russian_approve)],
     },
-    fallbacks=[
-        CommandHandler("cancel", cancel),
-        MessageHandler(ButtonsFilter(*MainButtons), cancel)
-    ],
-    allow_reentry=True,
-    name='russian_transfer_dialog',
+    fallbacks=default_fallbacks,
+    map_to_parent={
+        ConversationHandler.END: 'CHOOSING',
+    },
+    name=USER_DATA_KEY,
     persistent=True,
 )

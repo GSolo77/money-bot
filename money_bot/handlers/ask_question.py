@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from telegram import Update
@@ -6,40 +7,35 @@ from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, \
     MessageHandler, filters
 
 from config import TELEGRAM_MANAGER_ID
-from filters import ButtonsFilter
-from handlers.cancel import cancel
-from handlers.keyboards import MAIN_KEYBOARD
+from handlers.common import default_fallbacks
+from handlers.keyboards import MAIN_KEYBOARD, CANCEL_KEYBOARD
 from messages.common import QUESTION_PROMPT_MESSAGE, MainButtons, \
     QUESTION_SUCCESS_MESSAGE
+from services.filters import TEXT_NOT_CMND_NOR_BTN
+from services.utils import SLEEP_TIMEOUT
 
 logger = logging.getLogger(__name__)
 QUESTION = 0
 
 
-async def question(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    logger.info('question. user_data %s', context.user_data)
-    logger.info('question. call_back %s', update.callback_query)
+async def question(update: Update, _: ContextTypes.DEFAULT_TYPE) -> int:
+    await asyncio.sleep(SLEEP_TIMEOUT)
     await update.message.reply_text(
         QUESTION_PROMPT_MESSAGE,
-        reply_markup=None,
+        reply_markup=CANCEL_KEYBOARD,
         parse_mode=ParseMode.MARKDOWN,
     )
     return QUESTION
 
 
-async def user_question(update: Update, _: ContextTypes.DEFAULT_TYPE) -> int:
-    # if message exists (text or photo) or user did not send button text –
-    # do not forward to manager
-    if (
-        (update.message.text or update.message.photo)
-        and not any(str(button) in update.message.text for button in MainButtons)
-    ):
-        await update.message.forward(TELEGRAM_MANAGER_ID)
-
+async def user_question(update: Update,
+                        context: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.forward(TELEGRAM_MANAGER_ID)
     await update.message.reply_text(
         QUESTION_SUCCESS_MESSAGE,
         reply_markup=MAIN_KEYBOARD,
     )
+    context.user_data.clear()
 
     return ConversationHandler.END
 
@@ -50,13 +46,12 @@ question_conv = ConversationHandler(
         CommandHandler('question', question),
     ],
     states={
-        QUESTION: [MessageHandler(~filters.COMMAND, user_question)],
+        QUESTION: [MessageHandler(TEXT_NOT_CMND_NOR_BTN, user_question)],
     },
-    fallbacks=[
-        CommandHandler("cancel", cancel),
-        MessageHandler(ButtonsFilter(*MainButtons), cancel),
-    ],
-    allow_reentry=True,
-    name='question_dialog',
+    fallbacks=default_fallbacks,
+    map_to_parent={
+        ConversationHandler.END: 'CHOOSING',
+    },
+    name="question_conv",
     persistent=True,
 )

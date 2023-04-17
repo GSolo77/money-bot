@@ -1,29 +1,46 @@
 import logging
 
+from telegram.ext import Application, PicklePersistence, CommandHandler, \
+    MessageHandler, ConversationHandler
+
 from config import TELEGRAM_BOT_TOKEN
-
-from telegram.ext import Application, PicklePersistence, CommandHandler
-
-from handlers.ask_question import question_conv
-from handlers.exchange import exchange_conv
-from handlers.russian_transfer import russian_transfer_conv
-from handlers.start import start
+from handlers import CONVERSATIONS
+from handlers.common import start, reply_to_others, error_handler, \
+    default_fallbacks
+from services.decorators import debug_conversation_handlers
+from services.filters import ALL_NOT_CMND_NOR_BTN
+from services.utils import validate_unique_states
 
 logger = logging.getLogger(__name__)
 
+application = Application.builder().token(
+    TELEGRAM_BOT_TOKEN,
+).persistence(
+    PicklePersistence(filepath="conversation"),
+).build()
+
 
 def main() -> None:
-    persistence = PicklePersistence(filepath="conversationbot")
-    application = Application.builder().token(
-        TELEGRAM_BOT_TOKEN,
-    ).persistence(
-        persistence,
-    ).build()
+    validate_unique_states(CONVERSATIONS)
+    debug_conversation_handlers(CONVERSATIONS)
 
-    application.add_handler(CommandHandler('start', start))
-    application.add_handler(question_conv)
-    application.add_handler(exchange_conv)
-    application.add_handler(russian_transfer_conv)
+    main_conv = ConversationHandler(
+        entry_points=[CommandHandler('start', start)],
+        states={
+            'CHOOSING': [*CONVERSATIONS],
+        },
+        fallbacks=default_fallbacks,
+        allow_reentry=True,
+        name="main_conv",
+        persistent=True,
+    )
+
+    application.add_handler(main_conv)
+    application.add_handler(
+        MessageHandler(ALL_NOT_CMND_NOR_BTN, reply_to_others)
+    )
+    application.add_error_handler(error_handler)
+
     application.run_polling()
 
 

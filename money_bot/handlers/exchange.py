@@ -1,140 +1,134 @@
+import asyncio
 import logging
 
 from telegram import Update
-from telegram.constants import ParseMode
 from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, \
     MessageHandler, filters, CallbackQueryHandler
 
-from config import TELEGRAM_MANAGER_ID
-from filters import ButtonsFilter
-from handlers.cancel import cancel
-from handlers.keyboards import EXCHANGE_INIT_KEYBOARD, \
-    EXCHANGE_CURRENCY_KEYBOARD, PAY_METHOD_KEYBOARD, APPROVE_KEYBOARD, \
-    EXCHANGE_NETWORK_KEYBOARD, MAIN_KEYBOARD
-from messages.common import ApprovalButtons, MainButtons, PayMethod
+from handlers.common import default_fallbacks
+from handlers.keyboards import MAIN_KEYBOARD, build_inline_keyboard, \
+    CANCEL_KEYBOARD
+from messages.common import ApprovalButtons, MainButtons, PayMethod, \
+    AMOUNT_PROMPT
 from messages.exchange import ExchangeType, ExchangeCurrency, \
     ExchangeNetwork, EXCHANGE_INFO_MESSAGE
-from services.exceptions import RequiredDataMissing
+from services.utils import to_number, SLEEP_TIMEOUT
+from services.filters import TEXT_NOT_CMND_NOR_BTN
+from services.manager import send_user_request_to_manager
 
 logger = logging.getLogger(__name__)
 
 USER_DATA_KEY = 'exchange_request'
-TYPE, CURRENCY, METHOD, AMOUNT, NETWORK, APPROVE, RESULT = 1, 2, 3, 4, 5, 6, 7
-STEPS_CALLBACK_MAPPING = {
-    TYPE: ExchangeType,
-    CURRENCY: ExchangeCurrency,
-    NETWORK: ExchangeNetwork,
-    METHOD: PayMethod,
-}
-
-
-def _build_exchange_request_message(user_data: dict[int, str]) -> str:
-    if user_data.keys() != STEPS_CALLBACK_MAPPING.keys():
-        raise RequiredDataMissing
-
-    message = [
-        f"{btn_enum.cls_name}:  {btn_enum.value_of(user_data[step])}"
-        for step, btn_enum in STEPS_CALLBACK_MAPPING.items()
-    ]
-
-    return "\n".join(message)
+TYPE, CURRENCY, PAY_METHOD, AMOUNT, NETWORK, APPROVE = range(1, 7)
 
 
 async def exchange(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    logger.info('exchange. user_data %s', context.user_data)
+    context.user_data[USER_DATA_KEY] = {}
+    await asyncio.sleep(SLEEP_TIMEOUT)
     await update.message.reply_text(
         EXCHANGE_INFO_MESSAGE,
-        reply_markup=EXCHANGE_INIT_KEYBOARD,
+        reply_markup=CANCEL_KEYBOARD,
+    )
+    await update.message.reply_text(
+        "Выберите тип операции",
+        reply_markup=build_inline_keyboard(ExchangeType, rows=2),
+    )
+
+    return TYPE
+
+
+async def exchange_type(update: Update,
+                        context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    context.user_data[USER_DATA_KEY][TYPE] = (
+        f"Тип операции: {ExchangeType.value_of(query.data)}"
+    )
+    await query.answer()
+    await query.edit_message_text(
+        "Выберите валюту оплаты",
+        reply_markup=build_inline_keyboard(ExchangeCurrency, rows=3),
     )
 
     return CURRENCY
 
 
-async def choose_currency(update: Update,
-                          context: ContextTypes.DEFAULT_TYPE) -> int:
+async def exchange_currency(update: Update,
+                            context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
-    context.user_data[USER_DATA_KEY] = {}
-    context.user_data[USER_DATA_KEY][TYPE] = query.data
+    context.user_data[USER_DATA_KEY][CURRENCY] = (
+        f"Валюта оплаты: {ExchangeCurrency.value_of(query.data)}"
+    )
     await query.answer()
-    logger.info("currency. user_data %s", context.user_data)
     await query.edit_message_text(
-        "Выберите валюту оплаты",
-        reply_markup=EXCHANGE_CURRENCY_KEYBOARD,
+        "Выберите способ оплаты",
+        reply_markup=build_inline_keyboard(
+            PayMethod,
+            rows=3,
+            exclude_names=[PayMethod.cash.name],
+        ),
     )
 
-    return METHOD
+    return PAY_METHOD
 
 
-async def choose_method(update: Update,
-                        context: ContextTypes.DEFAULT_TYPE) -> int:
+async def exchange_pay_method(update: Update,
+                              context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
-    context.user_data[USER_DATA_KEY][CURRENCY] = query.data
+    context.user_data[USER_DATA_KEY][PAY_METHOD] = (
+        f"Способ оплаты: {PayMethod.value_of(query.data)}"
+    )
     await query.answer()
-    logger.info("type. user_data %s", context.user_data)
     await query.edit_message_text(
-        "Выберите тип оплаты",
-        reply_markup=PAY_METHOD_KEYBOARD,
+        "Выберите сеть",
+        reply_markup=build_inline_keyboard(ExchangeNetwork, rows=2),
     )
 
     return NETWORK
 
 
-async def choose_network(update: Update,
-                         context: ContextTypes.DEFAULT_TYPE) -> int:
+async def exchange_network(update: Update,
+                           context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
-    context.user_data[USER_DATA_KEY][METHOD] = query.data
+    context.user_data[USER_DATA_KEY][NETWORK] = (
+        f"Сеть: {ExchangeNetwork.value_of(query.data)}"
+    )
     await query.answer()
-    logger.info('network. user_data %s', context.user_data)
-    await query.edit_message_text(
-        "Выберите сеть",
-        reply_markup=EXCHANGE_NETWORK_KEYBOARD,
+    await query.edit_message_reply_markup(None)
+    await context.bot.send_message(
+        query.message.chat_id,
+        "Введите количество USDT в числовом формате",
+    )
+    return AMOUNT
+
+
+async def exchange_amount(update: Update,
+                          context: ContextTypes.DEFAULT_TYPE) -> int:
+    number, err = to_number(update)
+    if err:
+        await update.message.reply_text(AMOUNT_PROMPT)
+        return AMOUNT
+
+    context.user_data[USER_DATA_KEY][AMOUNT] = f"Кол-во USDT: {int(number)}"
+    final_request = "\n".join(context.user_data[USER_DATA_KEY].values())
+    await update.message.reply_text(
+        f"Ваша заявка:\n\n{final_request}\n\nПодтвердить?",
+        reply_markup=build_inline_keyboard(ApprovalButtons, rows=1),
     )
 
     return APPROVE
 
 
-async def approve_exchange_request(update: Update,
-                                   context: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    context.user_data[USER_DATA_KEY][NETWORK] = query.data
-    await query.answer()
-    logger.info('approve. user_data %s', context.user_data)
-    user_final_request = _build_exchange_request_message(
-        context.user_data[USER_DATA_KEY],
-    )
-    await query.edit_message_text(
-        f"Ваша заявка:\n\n{user_final_request}\n\nПодтвердить?",
-        reply_markup=APPROVE_KEYBOARD,
-    )
-
-    return RESULT
-
-
-async def result_exchange_result(update: Update,
-                                 context: ContextTypes.DEFAULT_TYPE) -> int:
+async def exchange_approve(update: Update,
+                           context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
     await query.message.edit_reply_markup(None)
 
-    if query.data == ApprovalButtons.approve.name:
-        message_text = "Ваша заявка успешно отправлена!"
-        user = update.effective_user
-        user_final_request = (
-            f"Заявка пользователя {user.last_name} {user.first_name} "
-            f"(@{user.username}):\n\n"
-        )
-        user_final_request += _build_exchange_request_message(
-            context.user_data[USER_DATA_KEY],
-        )
-        await context.bot.send_message(
-            TELEGRAM_MANAGER_ID,
-            user_final_request,
-            parse_mode=ParseMode.MARKDOWN,
-        )
-    else:
-        message_text = "Отменено"
-
-    await query.message.reply_text(message_text, reply_markup=MAIN_KEYBOARD)
+    await query.message.reply_text(
+        await send_user_request_to_manager(update, context, USER_DATA_KEY),
+        reply_markup=MAIN_KEYBOARD,
+    )
+    context.user_data.clear()
 
     return ConversationHandler.END
 
@@ -145,17 +139,17 @@ exchange_conv = ConversationHandler(
         MessageHandler(filters.Regex(MainButtons.exchange), exchange),
     ],
     states={
-        CURRENCY: [CallbackQueryHandler(choose_currency)],
-        METHOD: [CallbackQueryHandler(choose_method)],
-        NETWORK: [CallbackQueryHandler(choose_network)],
-        APPROVE: [CallbackQueryHandler(approve_exchange_request)],
-        RESULT: [CallbackQueryHandler(result_exchange_result)],
+        TYPE: [CallbackQueryHandler(exchange_type)],
+        CURRENCY: [CallbackQueryHandler(exchange_currency)],
+        PAY_METHOD: [CallbackQueryHandler(exchange_pay_method)],
+        NETWORK: [CallbackQueryHandler(exchange_network)],
+        AMOUNT: [MessageHandler(TEXT_NOT_CMND_NOR_BTN, exchange_amount)],
+        APPROVE: [CallbackQueryHandler(exchange_approve)],
     },
-    fallbacks=[
-        CommandHandler("cancel", cancel),
-        MessageHandler(ButtonsFilter(*MainButtons), cancel)
-    ],
-    allow_reentry=True,
-    name='exchange_dialog',
+    fallbacks=default_fallbacks,
+    map_to_parent={
+        ConversationHandler.END: 'CHOOSING',
+    },
+    name=USER_DATA_KEY,
     persistent=True,
 )

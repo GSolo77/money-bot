@@ -6,12 +6,29 @@ RUSSIAN_TRANSFER_MESSAGE = (
     "Также, мы можем принимать наличные."
 )
 
+ABROAD_TRANSFER_MESSAGE = (
+    "Отправка рублей и валюты в любую точку мира, любая сумма. "
+    "Возможен прием наличных."
+)
+
 
 class ReceiveMethod(StrEnumAsCallback):
     cash = "Наличные 💰"
     bank = "Банковский перевод 🏦"
 
-    @classmethod
-    @property
-    def cls_name(cls) -> str:  # noqa
-        return "Предпочтительный способ получения"
+
+class OriginCurrency(StrEnumAsCallback):
+    rub = "RUB 🇷🇺"
+    usd = "USD 🇺🇸"
+    eur = "EUR 🇪🇺"
+    cny = "CNY 🇨🇳"
+    aed = "AED 🇦🇪"
+    byn = "BYN 🇧🇾"
+    thd = "THD 🇹🇭"
+    local = "Местная"
+    other = "Другая"
+
+
+class RecipientType(StrEnumAsCallback):
+    individual = "Физ. лицо 👤"
+    business = "Юр. лицо 👨‍💼"
