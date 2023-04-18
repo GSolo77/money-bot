@@ -144,7 +144,7 @@ async def abroad_recipient_type(update: Update,
         f"Тип получателя: {RecipientType.value_of(query.data)}"
     )
     await query.answer()
-    await query.edit_message_text("Введите город отпрвления")
+    await query.edit_message_text("Введите город отправления")
 
     return ORIGIN_CITY
 

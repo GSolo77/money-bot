@@ -118,13 +118,12 @@ async def russian_approve(update: Update,
     query = update.callback_query
 
     await query.answer()
-    await query.message.edit_reply_markup(reply_markup=None)
-    print(f"{USER_DATA_KEY =}")
     await query.message.reply_text(
         await send_user_request_to_manager(update, context, USER_DATA_KEY),
         reply_markup=MAIN_KEYBOARD,
     )
     context.user_data.clear()
+
     return ConversationHandler.END
 
 
