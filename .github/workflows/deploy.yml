@@ -26,9 +26,9 @@ jobs:
           [ -d "money-bot" ] || git clone git@github.com:WannaFight/money-bot.git
           cd money-bot
           git pull origin master
-          echo "TELEGRAM_BOT_TOKEN=$TOKEN" > .env
-          echo "TELEGRAM_DEVELOPER_ID=$DEV_ID" >> .env
-          echo "TELEGRAM_MANAGER_ID=$MANAGER_ID" >> .env
+          echo "TELEGRAM_BOT_TOKEN=$TOKEN" > money_bot/.env
+          echo "TELEGRAM_DEVELOPER_ID=$DEV_ID" >> money_bot/.env
+          echo "TELEGRAM_MANAGER_ID=$MANAGER_ID" >> money_bot/.env
 
     - name: Start service
       uses: appleboy/ssh-action@v0.1.10
