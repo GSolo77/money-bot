@@ -3,7 +3,7 @@ import logging
 from telegram.ext import Application, PicklePersistence, CommandHandler, \
     MessageHandler, ConversationHandler
 
-from config import TELEGRAM_BOT_TOKEN
+from config import TELEGRAM_BOT_TOKEN, PROJECT_PATH
 from handlers import CONVERSATIONS
 from handlers.common import start, reply_to_others, error_handler, \
     default_fallbacks
@@ -13,16 +13,16 @@ from services.utils import validate_unique_states
 
 logger = logging.getLogger(__name__)
 
-application = Application.builder().token(
-    TELEGRAM_BOT_TOKEN,
-).persistence(
-    PicklePersistence(filepath="conversation"),
-).build()
-
 
 def main() -> None:
     validate_unique_states(CONVERSATIONS)
     debug_conversation_handlers(CONVERSATIONS)
+
+    application = Application.builder().token(
+        TELEGRAM_BOT_TOKEN,
+    ).persistence(
+        PicklePersistence(filepath=PROJECT_PATH / "conversation"),
+    ).build()
 
     main_conv = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
@@ -42,6 +42,12 @@ def main() -> None:
     application.add_error_handler(error_handler)
 
     application.run_polling()
+    # application.run_webhook(
+    #     listen='127.0.0.1',
+    #     port=8443,
+    #     secret_token='secret',
+    #     webhook_url='https://8b8d-146-120-77-231.ngrok-free.app:8443'
+    # )
 
 
 if __name__ == "__main__":

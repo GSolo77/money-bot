@@ -26,4 +26,7 @@ async def send_user_request_to_manager(
         user_final_request,
         parse_mode=ParseMode.MARKDOWN,
     )
-    return "Ваша заявка успешно отправлена!"
+    return (
+        "Ваша заявка успешно отправлена! "
+        "В ближайшее время с вами свяжется наш менеджер"
+    )

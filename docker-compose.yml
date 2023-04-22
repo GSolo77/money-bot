@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  bot:
+    build:
+      context: .
+    env_file:
+      - money_bot/.env
+    environment:
+      PYTHONUNBUFFERED: 1
+      PYTHONDONTWRITEBYTECODE: 1

@@ -30,6 +30,10 @@ async def question(update: Update, _: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def user_question(update: Update,
                         context: ContextTypes.DEFAULT_TYPE) -> int:
+    await context.bot.send_message(
+        TELEGRAM_MANAGER_ID,
+        f"Пользователь @{update.effective_user.username} задал вопрос:"
+    )
     await update.message.forward(TELEGRAM_MANAGER_ID)
     await update.message.reply_text(
         QUESTION_SUCCESS_MESSAGE,
