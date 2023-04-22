@@ -12,13 +12,18 @@ jobs:
     steps:
     - name: Pulling latest changes from repo
       uses: appleboy/ssh-action@v0.1.10
+      env:
+        TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        DEV_ID: ${{ secrets.TELEGRAM_DEVELOPER_ID }}
+        MANAGER_ID: ${{ secrets.TELEGRAM_MANAGER_ID }}
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.KEY }}
         passphrase: ${{ secrets.PASSPHRASE }}
+        envs: TOKEN,DEV_ID,MANAGER_ID
         script: |
           [ -d "money-bot" ] || git clone git@github.com:WannaFight/money-bot.git
           cd money-bot
           git pull origin master
-          env
+          echo $MANAGER_ID
