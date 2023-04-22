@@ -1,3 +1,4 @@
+---
 name: Cloning repo to server
 
 on:
@@ -9,11 +10,14 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     steps:
-    - name: executing remote ssh commands using password
+    - name: pulling latest changes from repo
       uses: appleboy/ssh-action@v0.1.10
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.KEY }}
         passphrase: ${{ secrets.PASSPHRASE }}
-        script: whoami
+        script: |
+          [ -d "money-bot" ] || git clone git@github.com:WannaFight/slepaya-bot.git
+          cd money-bot
+          git pull origin master
