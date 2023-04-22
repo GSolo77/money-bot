@@ -38,6 +38,7 @@ jobs:
         key: ${{ secrets.KEY }}
         passphrase: ${{ secrets.PASSPHRASE }}
         script: |
-          docker build --no-cache
+          cd money-bot
+          docker build --no-cache .
           docker-compose build --no-cache
           docker-compose up --force-recreate -d
