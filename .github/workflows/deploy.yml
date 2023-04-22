@@ -21,3 +21,4 @@ jobs:
           [ -d "money-bot" ] || git clone git@github.com:WannaFight/money-bot.git
           cd money-bot
           git pull origin master
+          env
