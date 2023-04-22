@@ -29,3 +29,15 @@ jobs:
           echo "TELEGRAM_BOT_TOKEN=$TOKEN" > .env
           echo "TELEGRAM_DEVELOPER_ID=$DEV_ID" >> .env
           echo "TELEGRAM_MANAGER_ID=$MANAGER_ID" >> .env
+
+    - name: Start service
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.KEY }}
+        passphrase: ${{ secrets.PASSPHRASE }}
+        script: |
+          docker build --no-cache
+          docker-compose build --no-cache
+          docker-compose up --force-recreate -d

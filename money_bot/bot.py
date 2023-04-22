@@ -42,13 +42,7 @@ def main() -> None:
     application.add_error_handler(error_handler)
 
     application.run_polling()
-    # application.run_webhook(
-    #     listen='127.0.0.1',
-    #     port=8443,
-    #     secret_token='secret',
-    #     webhook_url='https://8b8d-146-120-77-231.ngrok-free.app:8443'
-    # )
 
-
+print(1)
 if __name__ == "__main__":
     main()
