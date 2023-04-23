@@ -1,35 +1,41 @@
 ---
-name: Cloning repo to server
+name: Deploy to VPS
 
 on:
   push:
     branches: [ master ]
 jobs:
-
   build:
-    name: Deploy
+    name: Build and deploy
     runs-on: ubuntu-latest
     steps:
     - name: Pulling latest changes from repo
       uses: appleboy/ssh-action@v0.1.10
-      env:
-        TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-        DEV_ID: ${{ secrets.TELEGRAM_DEVELOPER_ID }}
-        MANAGER_ID: ${{ secrets.TELEGRAM_MANAGER_ID }}
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.KEY }}
         passphrase: ${{ secrets.PASSPHRASE }}
-        envs: TOKEN,DEV_ID,MANAGER_ID
         script: |
           [ -d "money-bot" ] || git clone git@github.com:WannaFight/money-bot.git
           cd money-bot
           git pull origin master
-          echo "TELEGRAM_BOT_TOKEN=$TOKEN" > money_bot/.env
-          echo "TELEGRAM_DEVELOPER_ID=$DEV_ID" >> money_bot/.env
-          echo "TELEGRAM_MANAGER_ID=$MANAGER_ID" >> money_bot/.env
-
+    - name: Create .env file
+      uses: SpicyPizza/create-envfile@v1.3
+      with:
+        envkey_TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        envkey_TELEGRAM_DEVELOPER_ID: ${{ secrets.TELEGRAM_DEVELOPER_ID }}
+        envkey_TELEGRAM_MANAGER_ID: ${{ secrets.TELEGRAM_MANAGER_ID }}
+        fail_on_empty: true
+    - name: Copy .env file
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.KEY }}
+        passphrase: ${{ secrets.PASSPHRASE }}
+        source: ".env"
+        target: money-bot/money_bot
     - name: Start service
       uses: appleboy/ssh-action@v0.1.10
       with:
