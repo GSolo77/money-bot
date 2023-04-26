@@ -150,6 +150,7 @@ exchange_conv = ConversationHandler(
     map_to_parent={
         ConversationHandler.END: 'CHOOSING',
     },
+    allow_reentry=True,
     name=USER_DATA_KEY,
     persistent=True,
 )

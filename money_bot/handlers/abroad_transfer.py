@@ -260,6 +260,10 @@ abroad_transfer_conv = ConversationHandler(
         APPROVE: [CallbackQueryHandler(abroad_approve)],
     },
     fallbacks=default_fallbacks,
+    map_to_parent={
+        ConversationHandler.END: 'CHOOSING',
+    },
+    allow_reentry=True,
     name=USER_DATA_KEY,
     persistent=True,
 )

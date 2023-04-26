@@ -3,7 +3,7 @@ import logging
 from telegram.ext import Application, PicklePersistence, CommandHandler, \
     MessageHandler, ConversationHandler
 
-from config import TELEGRAM_BOT_TOKEN, PROJECT_PATH
+from config import TELEGRAM_BOT_TOKEN, BASE_DIR
 from handlers import CONVERSATIONS
 from handlers.common import start, reply_to_others, error_handler, \
     default_fallbacks
@@ -21,7 +21,7 @@ def main() -> None:
     application = Application.builder().token(
         TELEGRAM_BOT_TOKEN,
     ).persistence(
-        PicklePersistence(filepath=PROJECT_PATH / "conversation"),
+        PicklePersistence(filepath=BASE_DIR / "data/conversation"),
     ).build()
 
     main_conv = ConversationHandler(
@@ -43,6 +43,6 @@ def main() -> None:
 
     application.run_polling()
 
-print(1)
+
 if __name__ == "__main__":
     main()

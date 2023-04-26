@@ -14,7 +14,7 @@ logging.basicConfig(
     level=logging.DEBUG if '--debug' in sys.argv else logging.INFO,
 )
 
-PROJECT_PATH = Path(__name__).parent.resolve()
+BASE_DIR = Path(__file__).resolve().parent
 
 TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 TELEGRAM_DEVELOPER_ID = int(os.environ["TELEGRAM_DEVELOPER_ID"])
