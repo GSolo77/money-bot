@@ -8,13 +8,12 @@ from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, \
 from handlers.common import default_fallbacks
 from handlers.keyboards import MAIN_KEYBOARD, build_inline_keyboard, \
     CANCEL_KEYBOARD
-from messages.common import ApprovalButtons, MainButtons, PayMethod, \
-    AMOUNT_PROMPT
+from messages.common import MainButtons, PayMethod, AMOUNT_PROMPT
 from messages.exchange import ExchangeType, ExchangeCurrency, \
     ExchangeNetwork, EXCHANGE_INFO_MESSAGE
-from services.utils import to_number, SLEEP_TIMEOUT
 from services.filters import TEXT_NOT_CMND_NOR_BTN
-from services.manager import send_user_request_to_manager
+from services.utils import to_number, SLEEP_TIMEOUT, init_user_data, \
+    approve_user_request, send_user_request_to_manager
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +27,8 @@ APPROVE = 'EXCHANGE_APPROVE'
 
 
 async def exchange(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
+    init_user_data(context, USER_DATA_KEY)
+
     await asyncio.sleep(SLEEP_TIMEOUT)
     await update.message.reply_text(
         EXCHANGE_INFO_MESSAGE,
@@ -114,11 +115,7 @@ async def exchange_amount(update: Update,
         return AMOUNT
 
     context.user_data[USER_DATA_KEY][AMOUNT] = f"Кол-во USDT: {int(number)}"
-    final_request = "\n".join(context.user_data[USER_DATA_KEY].values())
-    await update.message.reply_text(
-        f"Ваша заявка:\n\n{final_request}\n\nПодтвердить?",
-        reply_markup=build_inline_keyboard(ApprovalButtons, rows=1),
-    )
+    await approve_user_request(update, context, USER_DATA_KEY)
 
     return APPROVE
 

@@ -15,10 +15,10 @@ from services.filters import TEXT_NOT_CMND_NOR_BTN
 from services.utils import SLEEP_TIMEOUT
 
 logger = logging.getLogger(__name__)
-QUESTION = 0
+QUESTION = 'QUESTION'
 
 
-async def question(update: Update, _: ContextTypes.DEFAULT_TYPE) -> int:
+async def question(update: Update, _: ContextTypes.DEFAULT_TYPE) -> str:
     await asyncio.sleep(SLEEP_TIMEOUT)
     await update.message.reply_text(
         QUESTION_PROMPT_MESSAGE,

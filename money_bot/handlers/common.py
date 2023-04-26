@@ -40,10 +40,9 @@ async def reply_to_others(update: Update,
     await update.message.reply_text(text, reply_markup=MAIN_KEYBOARD)
 
 
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def cancel(update: Update, _: ContextTypes.DEFAULT_TYPE) -> int:
     """Cancels and ends the conversation."""
     await update.message.reply_text("Главное меню", reply_markup=MAIN_KEYBOARD)
-    context.user_data.clear()
 
     return ConversationHandler.END
 
@@ -89,5 +88,6 @@ async def error_handler(update: object,
 
 default_fallbacks = [
     CommandHandler("cancel", cancel),
+    CommandHandler('start', start),
     MessageHandler(filters.Regex(MainButtons.back_to_menu), cancel)
 ]

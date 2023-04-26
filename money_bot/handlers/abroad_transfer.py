@@ -8,12 +8,12 @@ from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, \
 from handlers.common import default_fallbacks
 from handlers.keyboards import build_inline_keyboard, MAIN_KEYBOARD, \
     CANCEL_KEYBOARD
-from messages.common import MainButtons, PayMethod, ApprovalButtons
+from messages.common import MainButtons, PayMethod
 from messages.transfer import ReceiveMethod, ABROAD_TRANSFER_MESSAGE, \
     OriginCurrency, RecipientType
-from services.utils import to_number, user_request, SLEEP_TIMEOUT
 from services.filters import TEXT_NOT_CMND_NOR_BTN
-from services.manager import send_user_request_to_manager
+from services.utils import to_number, SLEEP_TIMEOUT, init_user_data, \
+    approve_user_request, send_user_request_to_manager
 
 logger = logging.getLogger(__name__)
 USER_DATA_KEY = 'abroad_transfer'
@@ -32,6 +32,7 @@ APPROVE = 'ABROAD_APPROVE'
 
 async def abroad_transfer(update: Update,
                           context: ContextTypes.DEFAULT_TYPE) -> str:
+    init_user_data(context, USER_DATA_KEY)
     await asyncio.sleep(SLEEP_TIMEOUT)
     await update.message.reply_text(
         ABROAD_TRANSFER_MESSAGE,
@@ -205,14 +206,8 @@ async def abroad_receive_method(update: Update,
         f"Способ получения: {ReceiveMethod.value_of(query.data)}"
     )
     await query.answer()
-    message = (
-        f"Ваша заявка:\n\n{user_request(context, USER_DATA_KEY)}\n\n"
-        f"Подтвердить?"
-    )
-    await query.edit_message_text(
-        message,
-        reply_markup=build_inline_keyboard(ApprovalButtons, rows=1),
-    )
+    await query.edit_message_reply_markup(None)
+    await approve_user_request(update, context, USER_DATA_KEY)
 
     return APPROVE
 
