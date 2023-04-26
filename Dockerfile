@@ -7,4 +7,4 @@ RUN mkdir money_bot
 COPY money_bot/ money_bot
 COPY requirements.txt money_bot
 RUN python3.11 -m pip install -r money_bot/requirements.txt
-CMD ["python3.11", "money_bot/bot.py"]
+ENTRYPOINT ["python3.11", "money_bot/bot.py"]
