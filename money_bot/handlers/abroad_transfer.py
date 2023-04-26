@@ -17,22 +17,21 @@ from services.manager import send_user_request_to_manager
 
 logger = logging.getLogger(__name__)
 USER_DATA_KEY = 'abroad_transfer'
-[
-    ORIGIN_CURRENCY,
-    ORIGIN_INPUT_CURRENCY,
-    DESTINATION_CURRENCY,
-    RECIPIENT_TYPE,
-    ORIGIN_CITY,
-    PAY_METHOD,
-    RECEIVE_METHOD,
-    AMOUNT,
-    DESTINATION_CITY,
-    APPROVE,
-] = range(14, 24)
+
+ORIGIN_CURRENCY = 'ABROAD_ORIGIN_CURRENCY'
+ORIGIN_INPUT_CURRENCY = 'ABROAD_ORIGIN_INPUT_CURRENCY'
+DESTINATION_CURRENCY = 'ABROAD_DESTINATION_CURRENCY'
+RECIPIENT_TYPE = 'ABROAD_RECIPIENT_TYPE'
+ORIGIN_CITY = 'ABROAD_ORIGIN_CITY'
+PAY_METHOD = 'ABROAD_PAY_METHOD'
+RECEIVE_METHOD = 'ABROAD_RECEIVE_METHOD'
+AMOUNT = 'ABROAD_AMOUNT'
+DESTINATION_CITY = 'ABROAD_DESTINATION_CITY'
+APPROVE = 'ABROAD_APPROVE'
 
 
 async def abroad_transfer(update: Update,
-                          _: ContextTypes.DEFAULT_TYPE) -> int:
+                          context: ContextTypes.DEFAULT_TYPE) -> str:
     await asyncio.sleep(SLEEP_TIMEOUT)
     await update.message.reply_text(
         ABROAD_TRANSFER_MESSAGE,
@@ -50,10 +49,8 @@ async def abroad_transfer(update: Update,
 
 
 async def abroad_origin_cur(update: Update,
-                            context: ContextTypes.DEFAULT_TYPE) -> int:
+                            context: ContextTypes.DEFAULT_TYPE) -> str:
     query = update.callback_query
-
-    context.user_data[USER_DATA_KEY] = {}
     context.user_data[USER_DATA_KEY]['OP'] = (
         f"Тип операции: {MainButtons.abroad_transfer}"
     )
@@ -85,7 +82,7 @@ async def abroad_origin_cur(update: Update,
 
 
 async def abroad_origin_input_cur(update: Update,
-                                  context: ContextTypes.DEFAULT_TYPE) -> int:
+                                  context: ContextTypes.DEFAULT_TYPE) -> str:
     context.user_data[USER_DATA_KEY][ORIGIN_CURRENCY] = (
         f"Валюта отправления: {update.message.text.strip()}"
     )
@@ -108,7 +105,7 @@ async def abroad_origin_input_cur(update: Update,
 
 
 async def abroad_destination_cur(update: Update,
-                                 context: ContextTypes.DEFAULT_TYPE) -> int:
+                                 context: ContextTypes.DEFAULT_TYPE) -> str:
     query = update.callback_query
     currency = OriginCurrency.value_of(query.data)
     context.user_data[USER_DATA_KEY][DESTINATION_CURRENCY] = (
@@ -122,7 +119,7 @@ async def abroad_destination_cur(update: Update,
 
 
 async def abroad_amount(update: Update,
-                        context: ContextTypes.DEFAULT_TYPE) -> int:
+                        context: ContextTypes.DEFAULT_TYPE) -> str:
     number, err = to_number(update)
     if err:
         await update.message.reply_text("Введите сумму в числовом формате")
@@ -138,7 +135,7 @@ async def abroad_amount(update: Update,
 
 
 async def abroad_recipient_type(update: Update,
-                                context: ContextTypes.DEFAULT_TYPE) -> int:
+                                context: ContextTypes.DEFAULT_TYPE) -> str:
     query = update.callback_query
     context.user_data[USER_DATA_KEY][RECIPIENT_TYPE] = (
         f"Тип получателя: {RecipientType.value_of(query.data)}"
@@ -150,7 +147,7 @@ async def abroad_recipient_type(update: Update,
 
 
 async def origin_city(update: Update,
-                      context: ContextTypes.DEFAULT_TYPE) -> int:
+                      context: ContextTypes.DEFAULT_TYPE) -> str:
     context.user_data[USER_DATA_KEY][ORIGIN_CITY] = (
         f"Город отправления: {update.message.text.strip().capitalize()}"
     )
@@ -167,7 +164,7 @@ async def origin_city(update: Update,
 
 
 async def abroad_pay_method(update: Update,
-                            context: ContextTypes.DEFAULT_TYPE) -> int:
+                            context: ContextTypes.DEFAULT_TYPE) -> str:
     query = update.callback_query
     context.user_data[USER_DATA_KEY][PAY_METHOD] = (
         f"Способ оплаты: {PayMethod.value_of(query.data)}"
@@ -179,7 +176,7 @@ async def abroad_pay_method(update: Update,
 
 
 async def abroad_destination(update: Update,
-                             context: ContextTypes.DEFAULT_TYPE) -> int:
+                             context: ContextTypes.DEFAULT_TYPE) -> str:
     context.user_data[USER_DATA_KEY][DESTINATION_CITY] = (
         f"Город получателя: {update.message.text.strip().capitalize()}"
     )
@@ -202,7 +199,7 @@ async def abroad_destination(update: Update,
 
 
 async def abroad_receive_method(update: Update,
-                                context: ContextTypes.DEFAULT_TYPE) -> int:
+                                context: ContextTypes.DEFAULT_TYPE) -> str:
     query = update.callback_query
     context.user_data[USER_DATA_KEY][RECEIVE_METHOD] = (
         f"Способ получения: {ReceiveMethod.value_of(query.data)}"
@@ -221,7 +218,7 @@ async def abroad_receive_method(update: Update,
 
 
 async def abroad_approve(update: Update,
-                         context: ContextTypes.DEFAULT_TYPE) -> int:
+                         context: ContextTypes.DEFAULT_TYPE) -> str:
     query = update.callback_query
 
     await query.answer()

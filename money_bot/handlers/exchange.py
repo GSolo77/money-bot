@@ -19,11 +19,15 @@ from services.manager import send_user_request_to_manager
 logger = logging.getLogger(__name__)
 
 USER_DATA_KEY = 'exchange_request'
-TYPE, CURRENCY, PAY_METHOD, AMOUNT, NETWORK, APPROVE = range(1, 7)
+TYPE = 'EXCHANGE_TYPE'
+CURRENCY = 'EXCHANGE_CURRENCY'
+PAY_METHOD = 'EXCHANGE_PAY_METHOD'
+AMOUNT = 'EXCHANGE_AMOUNT'
+NETWORK = 'EXCHANGE_NETWORK'
+APPROVE = 'EXCHANGE_APPROVE'
 
 
-async def exchange(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data[USER_DATA_KEY] = {}
+async def exchange(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     await asyncio.sleep(SLEEP_TIMEOUT)
     await update.message.reply_text(
         EXCHANGE_INFO_MESSAGE,
@@ -38,7 +42,8 @@ async def exchange(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def exchange_type(update: Update,
-                        context: ContextTypes.DEFAULT_TYPE) -> int:
+                        context: ContextTypes.DEFAULT_TYPE) -> str:
+
     query = update.callback_query
     context.user_data[USER_DATA_KEY][TYPE] = (
         f"Тип операции: {ExchangeType.value_of(query.data)}"
@@ -53,7 +58,7 @@ async def exchange_type(update: Update,
 
 
 async def exchange_currency(update: Update,
-                            context: ContextTypes.DEFAULT_TYPE) -> int:
+                            context: ContextTypes.DEFAULT_TYPE) -> str:
     query = update.callback_query
     context.user_data[USER_DATA_KEY][CURRENCY] = (
         f"Валюта оплаты: {ExchangeCurrency.value_of(query.data)}"
@@ -72,7 +77,7 @@ async def exchange_currency(update: Update,
 
 
 async def exchange_pay_method(update: Update,
-                              context: ContextTypes.DEFAULT_TYPE) -> int:
+                              context: ContextTypes.DEFAULT_TYPE) -> str:
     query = update.callback_query
     context.user_data[USER_DATA_KEY][PAY_METHOD] = (
         f"Способ оплаты: {PayMethod.value_of(query.data)}"
@@ -87,7 +92,7 @@ async def exchange_pay_method(update: Update,
 
 
 async def exchange_network(update: Update,
-                           context: ContextTypes.DEFAULT_TYPE) -> int:
+                           context: ContextTypes.DEFAULT_TYPE) -> str:
     query = update.callback_query
     context.user_data[USER_DATA_KEY][NETWORK] = (
         f"Сеть: {ExchangeNetwork.value_of(query.data)}"
@@ -102,7 +107,7 @@ async def exchange_network(update: Update,
 
 
 async def exchange_amount(update: Update,
-                          context: ContextTypes.DEFAULT_TYPE) -> int:
+                          context: ContextTypes.DEFAULT_TYPE) -> str:
     number, err = to_number(update)
     if err:
         await update.message.reply_text(AMOUNT_PROMPT)
@@ -119,7 +124,7 @@ async def exchange_amount(update: Update,
 
 
 async def exchange_approve(update: Update,
-                           context: ContextTypes.DEFAULT_TYPE) -> int:
+                           context: ContextTypes.DEFAULT_TYPE) -> str:
     query = update.callback_query
     await query.answer()
     await query.message.edit_reply_markup(None)

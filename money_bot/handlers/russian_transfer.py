@@ -17,11 +17,16 @@ from services.manager import send_user_request_to_manager
 
 logger = logging.getLogger(__name__)
 USER_DATA_KEY = 'russian_transfer'
-AMOUNT, ORIGIN, DESTINATION, PAY_METHOD, RECEIVE_METHOD, APPROVE = range(8, 14)
+AMOUNT = 'RUSSIAN_AMOUNT'
+ORIGIN = 'RUSSIAN_ORIGIN'
+DESTINATION = 'RUSSIAN_DESTINATION'
+PAY_METHOD = 'RUSSIAN_PAY_METHOD'
+RECEIVE_METHOD = 'RUSSIAN_RECEIVE_METHOD'
+APPROVE = 'RUSSIAN_APPROVE'
 
 
 async def russian_transfer(update: Update,
-                           _: ContextTypes.DEFAULT_TYPE) -> int:
+                           context: ContextTypes.DEFAULT_TYPE) -> str:
     await asyncio.sleep(SLEEP_TIMEOUT)
     await update.message.reply_text(
         RUSSIAN_TRANSFER_MESSAGE,
@@ -33,13 +38,12 @@ async def russian_transfer(update: Update,
 
 
 async def russian_amount(update: Update,
-                         context: ContextTypes.DEFAULT_TYPE) -> int:
+                         context: ContextTypes.DEFAULT_TYPE) -> str:
     number, err = to_number(update)
     if err:
         await update.message.reply_text(AMOUNT_PROMPT)
         return AMOUNT
 
-    context.user_data[USER_DATA_KEY] = {}
     context.user_data[USER_DATA_KEY]['OP'] = (
         f"Тип операции: {MainButtons.russian_transfer}"
     )
@@ -50,7 +54,7 @@ async def russian_amount(update: Update,
 
 
 async def russian_origin(update: Update,
-                         context: ContextTypes.DEFAULT_TYPE) -> int:
+                         context: ContextTypes.DEFAULT_TYPE) -> str:
     context.user_data[USER_DATA_KEY][ORIGIN] = (
         f"Город отправления: {update.message.text.strip().capitalize()}"
     )
@@ -72,7 +76,7 @@ async def russian_origin(update: Update,
 
 
 async def russian_pay_method(update: Update,
-                             context: ContextTypes.DEFAULT_TYPE) -> int:
+                             context: ContextTypes.DEFAULT_TYPE) -> str:
     query = update.callback_query
     context.user_data[USER_DATA_KEY][PAY_METHOD] = (
         f"Способ оплаты: {PayMethod.value_of(query.data)}"
@@ -84,7 +88,7 @@ async def russian_pay_method(update: Update,
 
 
 async def russian_destination(update: Update,
-                              context: ContextTypes.DEFAULT_TYPE) -> int:
+                              context: ContextTypes.DEFAULT_TYPE) -> str:
     context.user_data[USER_DATA_KEY][DESTINATION] = (
         f"Город получения: {update.message.text.strip().capitalize()}"
     )
@@ -98,7 +102,7 @@ async def russian_destination(update: Update,
 
 
 async def russian_receive_method(update: Update,
-                                 context: ContextTypes.DEFAULT_TYPE) -> int:
+                                 context: ContextTypes.DEFAULT_TYPE) -> str:
     query = update.callback_query
     context.user_data[USER_DATA_KEY][RECEIVE_METHOD] = (
         f"Способ получения: {ReceiveMethod.value_of(query.data)}"
@@ -114,7 +118,7 @@ async def russian_receive_method(update: Update,
 
 
 async def russian_approve(update: Update,
-                          context: ContextTypes.DEFAULT_TYPE) -> int:
+                          context: ContextTypes.DEFAULT_TYPE) -> str:
     query = update.callback_query
 
     await query.answer()
