@@ -16,7 +16,11 @@ logger = logging.getLogger(__name__)
 
 
 async def start(update: Update, _: ContextTypes.DEFAULT_TYPE) -> str:
-    await update.message.reply_text(START_MESSAGE, reply_markup=MAIN_KEYBOARD)
+    await update.message.reply_text(
+        START_MESSAGE,
+        reply_markup=MAIN_KEYBOARD,
+        parse_mode=ParseMode.MARKDOWN,
+    )
     return 'CHOOSING'
 
 

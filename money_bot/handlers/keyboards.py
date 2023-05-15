@@ -8,7 +8,8 @@ from messages.common import MainButtons, StrEnumAsCallback
 MAIN_KEYBOARD = ReplyKeyboardMarkup(
     keyboard=(
         (MainButtons.exchange,),
-        (MainButtons.abroad_transfer, MainButtons.question),
+        (MainButtons.abroad_transfer,),
+        (MainButtons.question,),
     ),
     one_time_keyboard=True,
     resize_keyboard=True,

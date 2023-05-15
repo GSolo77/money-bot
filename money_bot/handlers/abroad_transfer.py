@@ -22,7 +22,7 @@ ORIGIN_CURRENCY = 'ABROAD_ORIGIN_CURRENCY'
 ORIGIN_INPUT_CURRENCY = 'ABROAD_ORIGIN_INPUT_CURRENCY'
 DESTINATION_CURRENCY = 'ABROAD_DESTINATION_CURRENCY'
 RECIPIENT_TYPE = 'ABROAD_RECIPIENT_TYPE'
-ORIGIN_CITY = 'ABROAD_ORIGIN_CITY'
+ORIGIN = 'ABROAD_ORIGIN'
 PAY_METHOD = 'ABROAD_PAY_METHOD'
 RECEIVE_METHOD = 'ABROAD_RECEIVE_METHOD'
 AMOUNT = 'ABROAD_AMOUNT'
@@ -123,36 +123,12 @@ async def abroad_amount(update: Update,
                         context: ContextTypes.DEFAULT_TYPE) -> str:
     number, err = to_number(update)
     if err:
-        await update.message.reply_text("Введите сумму в числовом формате")
+        await update.message.reply_text(
+            "Пожалуйста, введите сумму в числовом формате"
+        )
         return AMOUNT
 
     context.user_data[USER_DATA_KEY][AMOUNT] = f"Сумма: {number:.2f}"
-    await update.message.reply_text(
-        "Выберите тип получателя",
-        reply_markup=build_inline_keyboard(RecipientType, rows=1),
-    )
-
-    return RECIPIENT_TYPE
-
-
-async def abroad_recipient_type(update: Update,
-                                context: ContextTypes.DEFAULT_TYPE) -> str:
-    query = update.callback_query
-    context.user_data[USER_DATA_KEY][RECIPIENT_TYPE] = (
-        f"Тип получателя: {RecipientType.value_of(query.data)}"
-    )
-    await query.answer()
-    await query.edit_message_text("Введите город отправления")
-
-    return ORIGIN_CITY
-
-
-async def origin_city(update: Update,
-                      context: ContextTypes.DEFAULT_TYPE) -> str:
-    context.user_data[USER_DATA_KEY][ORIGIN_CITY] = (
-        f"Город отправления: {update.message.text.strip().capitalize()}"
-    )
-
     await update.message.reply_text(
         "Выберите способ оплаты",
         reply_markup=build_inline_keyboard(
@@ -171,29 +147,27 @@ async def abroad_pay_method(update: Update,
         f"Способ оплаты: {PayMethod.value_of(query.data)}"
     )
     await query.answer()
-    await query.edit_message_text("Введите город получателя")
 
-    return DESTINATION_CITY
+    if query.data == PayMethod.cash.name:
+        await query.edit_message_text("Введите город отправления")
+    else:
+        await query.edit_message_text("Введите название банка отправления")
+
+    return ORIGIN
 
 
-async def abroad_destination(update: Update,
-                             context: ContextTypes.DEFAULT_TYPE) -> str:
-    context.user_data[USER_DATA_KEY][DESTINATION_CITY] = (
-        f"Город получателя: {update.message.text.strip().capitalize()}"
+async def origin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
+    if PayMethod.cash.value in context.user_data[USER_DATA_KEY][PAY_METHOD]:
+        prompt = "Город отправления"
+    else:
+        prompt = "Банк отправления"
+
+    context.user_data[USER_DATA_KEY][ORIGIN] = (
+        f"{prompt}: {update.message.text.strip().capitalize()}"
     )
-
-    exclude_names = None
-    rec_type = context.user_data[USER_DATA_KEY][RECIPIENT_TYPE]
-    if rec_type.endswith(RecipientType.business.value):
-        exclude_names = [ReceiveMethod.cash.name]
-
     await update.message.reply_text(
-        "Предпочтительный способ получения",
-        reply_markup=build_inline_keyboard(
-            ReceiveMethod,
-            rows=2,
-            exclude_names=exclude_names,
-        ),
+        "Выберите предпочтительный способ получения",
+        reply_markup=build_inline_keyboard(ReceiveMethod, rows=2),
     )
 
     return RECEIVE_METHOD
@@ -204,6 +178,35 @@ async def abroad_receive_method(update: Update,
     query = update.callback_query
     context.user_data[USER_DATA_KEY][RECEIVE_METHOD] = (
         f"Способ получения: {ReceiveMethod.value_of(query.data)}"
+    )
+    await query.answer()
+
+    if query.data == ReceiveMethod.cash.name:
+        await query.edit_message_text("Введите город получения")
+        return DESTINATION_CITY
+
+    await query.edit_message_text(
+        "Выберите тип получателя",
+        reply_markup=build_inline_keyboard(RecipientType, rows=1),
+    )
+    return RECIPIENT_TYPE
+
+
+async def abroad_destination(update: Update,
+                             context: ContextTypes.DEFAULT_TYPE) -> str:
+    context.user_data[USER_DATA_KEY][DESTINATION_CITY] = (
+        f"Город получателя: {update.message.text.strip().capitalize()}"
+    )
+
+    await approve_user_request(update, context, USER_DATA_KEY)
+    return APPROVE
+
+
+async def abroad_recipient_type(update: Update,
+                                context: ContextTypes.DEFAULT_TYPE) -> str:
+    query = update.callback_query
+    context.user_data[USER_DATA_KEY][RECIPIENT_TYPE] = (
+        f"Тип получателя: {RecipientType.value_of(query.data)}"
     )
     await query.answer()
     await query.edit_message_reply_markup(None)
@@ -242,7 +245,7 @@ abroad_transfer_conv = ConversationHandler(
         ],
         DESTINATION_CURRENCY: [CallbackQueryHandler(abroad_destination_cur)],
         RECIPIENT_TYPE: [CallbackQueryHandler(abroad_recipient_type)],
-        ORIGIN_CITY: [MessageHandler(TEXT_NOT_CMND_NOR_BTN, origin_city)],
+        ORIGIN: [MessageHandler(TEXT_NOT_CMND_NOR_BTN, origin)],
         PAY_METHOD: [CallbackQueryHandler(abroad_pay_method)],
         RECEIVE_METHOD: [CallbackQueryHandler(abroad_receive_method)],
         AMOUNT: [MessageHandler(TEXT_NOT_CMND_NOR_BTN, abroad_amount)],
