@@ -7,7 +7,7 @@ from messages.common import MainButtons, StrEnumAsCallback
 
 MAIN_KEYBOARD = ReplyKeyboardMarkup(
     keyboard=(
-        (MainButtons.exchange, MainButtons.russian_transfer),
+        (MainButtons.exchange,),
         (MainButtons.abroad_transfer, MainButtons.question),
     ),
     one_time_keyboard=True,

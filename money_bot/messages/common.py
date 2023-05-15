@@ -16,7 +16,6 @@ class StrEnumAsCallback(StrEnum):
 
 class MainButtons(StrEnumAsCallback):
     exchange = "Операция по обмену 💱"
-    russian_transfer = "Отправка по России 🇷🇺"
     abroad_transfer = "Перестановка 🌍"
     question = "Задать вопрос ❓"
     back_to_menu = "Вернуться в главное меню 🏠"
