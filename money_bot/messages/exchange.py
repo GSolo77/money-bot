@@ -2,17 +2,22 @@ from messages.common import StrEnumAsCallback
 
 
 class ExchangeType(StrEnumAsCallback):
-    buy_usdt = "Купить USDT 📥"
-    sell_usdt = "Продать USDT 📤"
+    buy = "Покупка 📥"
+    sell = "Продажа 📤"
+
+
+class ExchangeCrypto(StrEnumAsCallback):
+    btc = "BTC"
+    usdt = "USDT"
+    usdc = "USDC"
+    eth = "ETH"
+    xmr = "XMR"
+    BNB = "BNB"
 
 
 class ExchangeCurrency(StrEnumAsCallback):
     rub = "RUB 🇷🇺"
     usd = "USD 🇺🇸"
-    eur = "EUR 🇪🇺"
-    cny = "CNY 🇨🇳"
-    byn = "BYN 🇧🇾"
-    thb = "THB 🇹🇭"
 
 
 class ExchangeNetwork(StrEnumAsCallback):
@@ -23,6 +28,7 @@ class ExchangeNetwork(StrEnumAsCallback):
 
 
 EXCHANGE_INFO_MESSAGE = (
-    "Мы обмениваем рубли/доллары/евро/юани на USDT и обратно. "
-    "Возможно проведение сделки с наличными в Москве."
+    "Мы покупаем и продаем различные криптовалюты:\n"
+    " - за рубли: наличные в Москве/безналичные практически в любой банк\n"
+    " - за доллары: только наличные в Москве"
 )

@@ -1,29 +1,45 @@
 import asyncio
 import logging
 
-from telegram import Update
+from telegram import Update, InlineKeyboardMarkup
+from telegram.constants import ParseMode
 from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, \
     MessageHandler, filters, CallbackQueryHandler
 
 from handlers.common import default_fallbacks
 from handlers.keyboards import MAIN_KEYBOARD, build_inline_keyboard, \
     CANCEL_KEYBOARD
-from messages.common import MainButtons, PayMethod, AMOUNT_PROMPT
+from messages.common import MainButtons, PayMethod
 from messages.exchange import ExchangeType, ExchangeCurrency, \
-    ExchangeNetwork, EXCHANGE_INFO_MESSAGE
-from services.filters import TEXT_NOT_CMND_NOR_BTN
-from services.utils import to_number, SLEEP_TIMEOUT, init_user_data, \
+    ExchangeNetwork, EXCHANGE_INFO_MESSAGE, ExchangeCrypto
+from services.utils import SLEEP_TIMEOUT, init_user_data, \
     approve_user_request, send_user_request_to_manager
 
 logger = logging.getLogger(__name__)
 
 USER_DATA_KEY = 'exchange_request'
 TYPE = 'EXCHANGE_TYPE'
-CURRENCY = 'EXCHANGE_CURRENCY'
-PAY_METHOD = 'EXCHANGE_PAY_METHOD'
-AMOUNT = 'EXCHANGE_AMOUNT'
 NETWORK = 'EXCHANGE_NETWORK'
 APPROVE = 'EXCHANGE_APPROVE'
+GIVE = 'EXCHANGE_GIVE'
+RECEIVE = 'EXCHANGE_RECEIVE'
+RUB_METHOD = 'EXCHANGE_RUB_METHOD'
+
+
+def _giveaway_keyboard(query_data: str) -> InlineKeyboardMarkup:
+    if query_data == ExchangeType.sell.name:
+        return build_inline_keyboard(ExchangeCrypto, rows=3)
+    return build_inline_keyboard(ExchangeCurrency, rows=2)
+
+
+def _receive_keyboard(query_data: str) -> InlineKeyboardMarkup:
+    if query_data == ExchangeType.sell.name:
+        return build_inline_keyboard(ExchangeCurrency, rows=2)
+    return build_inline_keyboard(ExchangeCrypto, rows=3)
+
+
+def _is_sell(context: ContextTypes.DEFAULT_TYPE) -> bool:
+    return context.chat_data[USER_DATA_KEY][TYPE] == ExchangeType.sell.name
 
 
 async def exchange(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
@@ -32,6 +48,7 @@ async def exchange(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     await asyncio.sleep(SLEEP_TIMEOUT)
     await update.message.reply_text(
         EXCHANGE_INFO_MESSAGE,
+        parse_mode=ParseMode.MARKDOWN,
         reply_markup=CANCEL_KEYBOARD,
     )
     await update.message.reply_text(
@@ -42,82 +59,156 @@ async def exchange(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     return TYPE
 
 
-async def exchange_type(update: Update,
-                        context: ContextTypes.DEFAULT_TYPE) -> str:
-
+async def exchange_type(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> str:
     query = update.callback_query
+    context.user_data[USER_DATA_KEY]['OP'] = (
+        f"Услуга: {MainButtons.exchange.value}"
+    )
     context.user_data[USER_DATA_KEY][TYPE] = (
         f"Тип операции: {ExchangeType.value_of(query.data)}"
     )
+    context.chat_data.setdefault(USER_DATA_KEY, {})[TYPE] = query.data
     await query.answer()
     await query.edit_message_text(
-        "Выберите валюту оплаты",
-        reply_markup=build_inline_keyboard(ExchangeCurrency, rows=3),
+        "Отдаете",
+        reply_markup=_giveaway_keyboard(query.data),
     )
 
-    return CURRENCY
+    return GIVE
 
 
-async def exchange_currency(update: Update,
-                            context: ContextTypes.DEFAULT_TYPE) -> str:
+async def give(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> str:
     query = update.callback_query
-    context.user_data[USER_DATA_KEY][CURRENCY] = (
-        f"Валюта оплаты: {ExchangeCurrency.value_of(query.data)}"
-    )
     await query.answer()
-    await query.edit_message_text(
-        "Выберите способ оплаты",
-        reply_markup=build_inline_keyboard(
-            PayMethod,
-            rows=3,
-            exclude_names=[PayMethod.cash.name],
-        ),
-    )
 
-    return PAY_METHOD
+    if _is_sell(context):
+        # crypto was chosen
+        context.user_data[USER_DATA_KEY][GIVE] = (
+            f"Отдаете: {ExchangeCrypto.value_of(query.data)}"
+        )
+
+        if query.data in (ExchangeCrypto.usdc.name, ExchangeCrypto.usdt.name):
+            await query.edit_message_text(
+                "Выберите сеть",
+                reply_markup=build_inline_keyboard(ExchangeNetwork, rows=2),
+            )
+            return NETWORK
+
+        await query.edit_message_text(
+            "Получаете",
+            reply_markup=build_inline_keyboard(ExchangeCurrency, rows=2),
+        )
+    else:
+        # curr was chosen
+        context.user_data[USER_DATA_KEY][GIVE] = (
+            f"Отдаете: {ExchangeCurrency.value_of(query.data)}"
+        )
+        if query.data == ExchangeCurrency.rub.name:
+            await query.edit_message_text(
+                "Выберите способ",
+                reply_markup=build_inline_keyboard(
+                    PayMethod,
+                    rows=2,
+                    include_names=[
+                        PayMethod.cash_moscow.name,
+                        PayMethod.bank.name,
+                    ],
+                ),
+            )
+            return RUB_METHOD
+        await query.edit_message_text(
+            "Получаете",
+            reply_markup=build_inline_keyboard(ExchangeCrypto, rows=3),
+        )
+    return RECEIVE
 
 
-async def exchange_pay_method(update: Update,
-                              context: ContextTypes.DEFAULT_TYPE) -> str:
+async def receive(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     query = update.callback_query
-    context.user_data[USER_DATA_KEY][PAY_METHOD] = (
-        f"Способ оплаты: {PayMethod.value_of(query.data)}"
-    )
     await query.answer()
-    await query.edit_message_text(
-        "Выберите сеть",
-        reply_markup=build_inline_keyboard(ExchangeNetwork, rows=2),
-    )
 
-    return NETWORK
+    if _is_sell(context):
+        # curr was chosen
+        context.user_data[USER_DATA_KEY][RECEIVE] = (
+            f"Получаете: {ExchangeCurrency.value_of(query.data)}"
+        )
+        if query.data == ExchangeCurrency.rub.name:
+            await query.edit_message_text(
+                "Выберите способ",
+                reply_markup=build_inline_keyboard(
+                    PayMethod,
+                    rows=2,
+                    include_names=[
+                        PayMethod.cash_moscow.name,
+                        PayMethod.bank.name,
+                    ],
+                ),
+            )
+            return RUB_METHOD
+    else:
+        # crypto was chosen
+        context.user_data[USER_DATA_KEY][RECEIVE] = (
+            f"Получаете: {ExchangeCrypto.value_of(query.data)}"
+        )
 
+        if query.data in (ExchangeCrypto.usdc.name, ExchangeCrypto.usdt.name):
+            await query.edit_message_text(
+                "Выберите сеть",
+                reply_markup=build_inline_keyboard(ExchangeNetwork, rows=2),
+            )
+            return NETWORK
 
-async def exchange_network(update: Update,
-                           context: ContextTypes.DEFAULT_TYPE) -> str:
-    query = update.callback_query
-    context.user_data[USER_DATA_KEY][NETWORK] = (
-        f"Сеть: {ExchangeNetwork.value_of(query.data)}"
-    )
-    await query.answer()
     await query.edit_message_reply_markup(None)
-    await context.bot.send_message(
-        query.message.chat_id,
-        "Введите количество USDT в числовом формате",
-    )
-    return AMOUNT
+    await approve_user_request(update, context, USER_DATA_KEY)
+    return APPROVE
 
 
-async def exchange_amount(update: Update,
-                          context: ContextTypes.DEFAULT_TYPE) -> str:
-    number, err = to_number(update)
-    if err:
-        await update.message.reply_text(AMOUNT_PROMPT)
-        return AMOUNT
+async def network(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
+    query = update.callback_query
+    await query.answer()
+    net_type = f" (сеть: {ExchangeNetwork.value_of(query.data)})"
 
-    context.user_data[USER_DATA_KEY][AMOUNT] = f"Кол-во USDT: {int(number)}"
+    if _is_sell(context):
+        context.user_data[USER_DATA_KEY][GIVE] += net_type
+        await query.edit_message_text(
+            "Получаете",
+            reply_markup=build_inline_keyboard(ExchangeCurrency, rows=2),
+        )
+        return RECEIVE
+
+    context.user_data[USER_DATA_KEY][RECEIVE] += net_type
+    await query.edit_message_reply_markup(None)
     await approve_user_request(update, context, USER_DATA_KEY)
 
     return APPROVE
+
+
+async def rub_method(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> str:
+    query = update.callback_query
+    await query.answer()
+    method = f" (способ: {PayMethod.value_of(query.data)})"
+
+    if _is_sell(context):
+        context.user_data[USER_DATA_KEY][RECEIVE] += method
+        await query.edit_message_reply_markup(None)
+        await approve_user_request(update, context, USER_DATA_KEY)
+        return APPROVE
+
+    context.user_data[USER_DATA_KEY][GIVE] += method
+    await query.edit_message_text(
+        "Получаете",
+        reply_markup=build_inline_keyboard(ExchangeCrypto, rows=3),
+    )
+    return RECEIVE
 
 
 async def exchange_approve(update: Update,
@@ -142,10 +233,10 @@ exchange_conv = ConversationHandler(
     ],
     states={
         TYPE: [CallbackQueryHandler(exchange_type)],
-        CURRENCY: [CallbackQueryHandler(exchange_currency)],
-        PAY_METHOD: [CallbackQueryHandler(exchange_pay_method)],
-        NETWORK: [CallbackQueryHandler(exchange_network)],
-        AMOUNT: [MessageHandler(TEXT_NOT_CMND_NOR_BTN, exchange_amount)],
+        GIVE: [CallbackQueryHandler(give)],
+        RECEIVE: [CallbackQueryHandler(receive)],
+        NETWORK: [CallbackQueryHandler(network)],
+        RUB_METHOD: [CallbackQueryHandler(rub_method)],
         APPROVE: [CallbackQueryHandler(exchange_approve)],
     },
     fallbacks=default_fallbacks,
