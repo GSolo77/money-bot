@@ -18,7 +18,7 @@ class OriginCurrency(StrEnumAsCallback):
     cny = "CNY 🇨🇳"
     aed = "AED 🇦🇪"
     byn = "BYN 🇧🇾"
-    thd = "THD 🇹🇭"
+    thd = "THB 🇹🇭"
     local = "Местная"
     other = "Другая"
 

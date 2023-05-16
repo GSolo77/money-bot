@@ -12,7 +12,7 @@ class ExchangeCrypto(StrEnumAsCallback):
     usdc = "USDC"
     eth = "ETH"
     xmr = "XMR"
-    BNB = "BNB"
+    bnb = "BNB"
 
 
 class ExchangeCurrency(StrEnumAsCallback):
