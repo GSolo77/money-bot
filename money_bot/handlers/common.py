@@ -85,13 +85,13 @@ async def error_handler(update: object,
 
     await context.bot.send_message(
         chat_id=update.effective_user.id,
-        text="Что-то пошло не так 🙁 Пожалуйста, попробуйте позже"
+        text="Извините, что-то пошло не так🙁 Пожалуйста, попробуйте еще раз"
     )
     return ConversationHandler.END
 
 
 default_fallbacks = [
     CommandHandler("cancel", cancel),
-    CommandHandler('start', start),
+    CommandHandler("start", start),
     MessageHandler(filters.Regex(MainButtons.back_to_menu), cancel)
 ]

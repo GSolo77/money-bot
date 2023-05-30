@@ -211,8 +211,10 @@ async def rub_method(
     return RECEIVE
 
 
-async def exchange_approve(update: Update,
-                           context: ContextTypes.DEFAULT_TYPE) -> str:
+async def exchange_approve(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> str:
     query = update.callback_query
     await query.answer()
     await query.message.edit_reply_markup(None)

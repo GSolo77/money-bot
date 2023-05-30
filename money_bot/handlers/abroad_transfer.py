@@ -30,8 +30,10 @@ DESTINATION_CITY = 'ABROAD_DESTINATION_CITY'
 APPROVE = 'ABROAD_APPROVE'
 
 
-async def abroad_transfer(update: Update,
-                          context: ContextTypes.DEFAULT_TYPE) -> str:
+async def abroad_transfer(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> str:
     init_user_data(context, USER_DATA_KEY)
     await asyncio.sleep(SLEEP_TIMEOUT)
     await update.message.reply_text(
@@ -49,8 +51,10 @@ async def abroad_transfer(update: Update,
     return ORIGIN_CURRENCY
 
 
-async def abroad_origin_cur(update: Update,
-                            context: ContextTypes.DEFAULT_TYPE) -> str:
+async def abroad_origin_cur(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> str:
     query = update.callback_query
     context.user_data[USER_DATA_KEY]['OP'] = (
         f"Тип операции: {MainButtons.abroad_transfer}"
@@ -82,8 +86,10 @@ async def abroad_origin_cur(update: Update,
     return DESTINATION_CURRENCY
 
 
-async def abroad_origin_input_cur(update: Update,
-                                  context: ContextTypes.DEFAULT_TYPE) -> str:
+async def abroad_origin_input_cur(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> str:
     context.user_data[USER_DATA_KEY][ORIGIN_CURRENCY] = (
         f"Валюта отправления: {update.message.text.strip()}"
     )
@@ -105,8 +111,10 @@ async def abroad_origin_input_cur(update: Update,
     return DESTINATION_CURRENCY
 
 
-async def abroad_destination_cur(update: Update,
-                                 context: ContextTypes.DEFAULT_TYPE) -> str:
+async def abroad_destination_cur(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> str:
     query = update.callback_query
     currency = OriginCurrency.value_of(query.data)
     context.user_data[USER_DATA_KEY][DESTINATION_CURRENCY] = (
@@ -140,8 +148,10 @@ async def abroad_amount(update: Update,
     return PAY_METHOD
 
 
-async def abroad_pay_method(update: Update,
-                            context: ContextTypes.DEFAULT_TYPE) -> str:
+async def abroad_pay_method(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> str:
     query = update.callback_query
     context.user_data[USER_DATA_KEY][PAY_METHOD] = (
         f"Способ оплаты: {PayMethod.value_of(query.data)}"
@@ -173,8 +183,10 @@ async def origin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     return RECEIVE_METHOD
 
 
-async def abroad_receive_method(update: Update,
-                                context: ContextTypes.DEFAULT_TYPE) -> str:
+async def abroad_receive_method(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> str:
     query = update.callback_query
     context.user_data[USER_DATA_KEY][RECEIVE_METHOD] = (
         f"Способ получения: {ReceiveMethod.value_of(query.data)}"
@@ -192,8 +204,10 @@ async def abroad_receive_method(update: Update,
     return RECIPIENT_TYPE
 
 
-async def abroad_destination(update: Update,
-                             context: ContextTypes.DEFAULT_TYPE) -> str:
+async def abroad_destination(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> str:
     context.user_data[USER_DATA_KEY][DESTINATION_CITY] = (
         f"Город получателя: {update.message.text.strip().capitalize()}"
     )
@@ -202,8 +216,10 @@ async def abroad_destination(update: Update,
     return APPROVE
 
 
-async def abroad_recipient_type(update: Update,
-                                context: ContextTypes.DEFAULT_TYPE) -> str:
+async def abroad_recipient_type(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> str:
     query = update.callback_query
     context.user_data[USER_DATA_KEY][RECIPIENT_TYPE] = (
         f"Тип получателя: {RecipientType.value_of(query.data)}"
@@ -215,8 +231,10 @@ async def abroad_recipient_type(update: Update,
     return APPROVE
 
 
-async def abroad_approve(update: Update,
-                         context: ContextTypes.DEFAULT_TYPE) -> str:
+async def abroad_approve(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> str:
     query = update.callback_query
 
     await query.answer()

@@ -39,9 +39,9 @@ def init_user_data(context: ContextTypes.DEFAULT_TYPE, key: str) -> None:
 
 
 async def send_user_request_to_manager(
-        update: Update,
-        context: ContextTypes.DEFAULT_TYPE,
-        data_key: str,
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+    data_key: str,
 ) -> str:
     if update.callback_query.data != ApprovalButtons.approve.name:
         return "Отменено"
@@ -64,9 +64,9 @@ async def send_user_request_to_manager(
 
 
 async def approve_user_request(
-        update: Update,
-        context: ContextTypes.DEFAULT_TYPE,
-        data_key: str
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+    data_key: str,
 ) -> None:
     message = (
         f"Ваша заявка:\n\n{user_request(context, data_key)}\n\n"

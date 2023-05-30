@@ -1,4 +1,4 @@
-from typing import Iterable, Type
+from typing import Type, Sequence
 
 from telegram import ReplyKeyboardMarkup, InlineKeyboardMarkup, \
     InlineKeyboardButton, KeyboardButton
@@ -22,21 +22,21 @@ CANCEL_KEYBOARD = ReplyKeyboardMarkup.from_button(
 )
 
 
-def _chunks(seq: Iterable, chunks_num: int) -> list[list]:
+def _chunks(seq: Sequence, chunks_num: int) -> list[list]:
     d, r = divmod(len(seq), chunks_num)
     res = []
     for i in range(chunks_num):
-        si = (d+1)*(i if i < r else r) + d*(0 if i < r else i - r)
-        res.append(seq[si:si+(d+1 if i < r else d)])
+        si = (d + 1) * (i if i < r else r) + d * (0 if i < r else i - r)
+        res.append(seq[si:si + (d + 1 if i < r else d)])
     return res
 
 
 def build_inline_keyboard(
-        buttons_enum: Type[StrEnumAsCallback],
-        *,
-        rows: int,
-        include_names: list['str'] = None,
-        exclude_names: list['str'] = None,
+    buttons_enum: Type[StrEnumAsCallback],
+    *,
+    rows: int,
+    include_names: list['str'] = None,
+    exclude_names: list['str'] = None,
 ) -> InlineKeyboardMarkup:
     if include_names and exclude_names:
         raise ValueError('Can not pass both include_names and exclude_names')
