@@ -5,7 +5,7 @@ from telegram import Update
 from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, \
     MessageHandler, filters, CallbackQueryHandler
 
-from handlers.common import default_fallbacks
+from handlers.common import default_fallbacks, MAIN_ENTRY_POINT
 from handlers.keyboards import build_inline_keyboard, MAIN_KEYBOARD, \
     CANCEL_KEYBOARD
 from messages.common import MainButtons, PayMethod
@@ -274,7 +274,7 @@ abroad_transfer_conv = ConversationHandler(
     },
     fallbacks=default_fallbacks,
     map_to_parent={
-        ConversationHandler.END: 'CHOOSING',
+        ConversationHandler.END: MAIN_ENTRY_POINT,
     },
     allow_reentry=True,
     name=USER_DATA_KEY,

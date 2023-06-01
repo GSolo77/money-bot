@@ -14,6 +14,8 @@ from messages.common import START_MESSAGE, MainButtons
 
 logger = logging.getLogger(__name__)
 
+MAIN_ENTRY_POINT = 'CHOOSING'
+
 
 async def start(update: Update, _: ContextTypes.DEFAULT_TYPE) -> str:
     await update.message.reply_text(
@@ -21,7 +23,7 @@ async def start(update: Update, _: ContextTypes.DEFAULT_TYPE) -> str:
         reply_markup=MAIN_KEYBOARD,
         parse_mode=ParseMode.MARKDOWN,
     )
-    return 'CHOOSING'
+    return MAIN_ENTRY_POINT
 
 
 async def reply_to_others(update: Update,
@@ -85,7 +87,7 @@ async def error_handler(update: object,
 
     await context.bot.send_message(
         chat_id=update.effective_user.id,
-        text="Извините, что-то пошло не так🙁 Пожалуйста, попробуйте еще раз"
+        text="Извините, что-то пошло не так🙁 Пожалуйста, попробуйте еще раз",
     )
     return ConversationHandler.END
 

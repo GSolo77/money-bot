@@ -6,7 +6,7 @@ from telegram.ext import Application, PicklePersistence, CommandHandler, \
 from config import TELEGRAM_BOT_TOKEN, BASE_DIR
 from handlers import CONVERSATIONS
 from handlers.common import start, reply_to_others, error_handler, \
-    default_fallbacks
+    default_fallbacks, MAIN_ENTRY_POINT
 from services.decorators import debug_conversation_handlers
 from services.filters import ALL_NOT_CMND_NOR_BTN
 from services.utils import validate_unique_states
@@ -27,7 +27,7 @@ def main() -> None:
     main_conv = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-            'CHOOSING': [*CONVERSATIONS],
+            MAIN_ENTRY_POINT: [*CONVERSATIONS],
         },
         fallbacks=default_fallbacks,
         allow_reentry=True,

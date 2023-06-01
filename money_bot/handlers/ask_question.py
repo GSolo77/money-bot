@@ -7,7 +7,7 @@ from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, \
     MessageHandler, filters
 
 from config import TELEGRAM_MANAGER_ID
-from handlers.common import default_fallbacks
+from handlers.common import default_fallbacks, MAIN_ENTRY_POINT
 from handlers.keyboards import MAIN_KEYBOARD, CANCEL_KEYBOARD
 from messages.common import QUESTION_PROMPT_MESSAGE, MainButtons, \
     QUESTION_SUCCESS_MESSAGE
@@ -56,7 +56,7 @@ question_conv = ConversationHandler(
     },
     fallbacks=default_fallbacks,
     map_to_parent={
-        ConversationHandler.END: 'CHOOSING',
+        ConversationHandler.END: MAIN_ENTRY_POINT,
     },
     name="question_conv",
     persistent=True,
