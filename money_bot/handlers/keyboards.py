@@ -1,21 +1,21 @@
 from typing import Type, Sequence
 
 from telegram import ReplyKeyboardMarkup, InlineKeyboardMarkup, \
-    InlineKeyboardButton, KeyboardButton
+    InlineKeyboardButton
 
 from messages.common import MainButtons, StrEnumAsCallback
 
-MAIN_KEYBOARD = ReplyKeyboardMarkup(
-    keyboard=(
-        (MainButtons.exchange,),
-        (MainButtons.abroad_transfer,),
-        (MainButtons.question,),
+MAIN_KEYBOARD = ReplyKeyboardMarkup.from_column(
+    button_column=(
+        MainButtons.exchange,
+        MainButtons.abroad_transfer,
+        MainButtons.question,
     ),
     one_time_keyboard=True,
     resize_keyboard=True,
 )
-CANCEL_KEYBOARD = ReplyKeyboardMarkup.from_button(
-    KeyboardButton(MainButtons.back_to_menu),
+CANCEL_KEYBOARD = ReplyKeyboardMarkup.from_column(
+    button_column=(MainButtons.back_to_menu, MainButtons.previous_step),
     resize_keyboard=True,
     one_time_keyboard=True,
     is_persistent=True,

@@ -95,5 +95,5 @@ async def error_handler(update: object,
 default_fallbacks = [
     CommandHandler("cancel", cancel),
     CommandHandler("start", start),
-    MessageHandler(filters.Regex(MainButtons.back_to_menu), cancel)
+    MessageHandler(filters.Regex(MainButtons.back_to_menu), cancel),
 ]
