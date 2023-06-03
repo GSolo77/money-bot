@@ -15,7 +15,7 @@ MAIN_KEYBOARD = ReplyKeyboardMarkup.from_column(
     resize_keyboard=True,
 )
 CANCEL_KEYBOARD = ReplyKeyboardMarkup.from_column(
-    button_column=(MainButtons.back_to_menu, MainButtons.previous_step),
+    button_column=(MainButtons.back_to_menu,),
     resize_keyboard=True,
     one_time_keyboard=True,
     is_persistent=True,
