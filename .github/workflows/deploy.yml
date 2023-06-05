@@ -9,17 +9,6 @@ jobs:
     name: Build and deploy
     runs-on: ubuntu-latest
     steps:
-    - name: Pulling latest changes from repo
-      uses: appleboy/ssh-action@v0.1.10
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.KEY }}
-        passphrase: ${{ secrets.PASSPHRASE }}
-        script: |
-          [ -d "money-bot" ] || git clone git@github.com:WannaFight/money-bot.git
-          cd money-bot
-          git pull origin master
     - name: Create .env file
       uses: SpicyPizza/create-envfile@v1.3
       with:
@@ -36,7 +25,7 @@ jobs:
         passphrase: ${{ secrets.PASSPHRASE }}
         source: ".env"
         target: money-bot/money_bot
-    - name: Start service
+    - name: Build service and start service
       uses: appleboy/ssh-action@v0.1.10
       with:
         host: ${{ secrets.HOST }}
@@ -44,7 +33,10 @@ jobs:
         key: ${{ secrets.KEY }}
         passphrase: ${{ secrets.PASSPHRASE }}
         script: |
+          echo "Cloning latest changes"
+          [ -d "money-bot" ] || git clone git@github.com:WannaFight/money-bot.git
           cd money-bot
-          docker build --no-cache .
+          git pull origin master
+          echo "Build and start"
           docker-compose build --no-cache
           docker-compose up --force-recreate -d

@@ -194,26 +194,33 @@ async def abroad_receive_method(
     await query.answer()
 
     if query.data == ReceiveMethod.cash.name:
-        await query.edit_message_text("Введите город получения")
-        return DESTINATION_CITY
-
-    await query.edit_message_text(
-        "Выберите тип получателя",
-        reply_markup=build_inline_keyboard(RecipientType, rows=1),
-    )
-    return RECIPIENT_TYPE
+        message = "Введите город получения"
+    else:
+        message = "Введите страну получения"
+    await query.edit_message_text(message)
+    return DESTINATION_CITY
 
 
 async def abroad_destination(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
 ) -> str:
+    destination = update.message.text.strip().capitalize()
+    receive_method = context.user_data[USER_DATA_KEY][RECEIVE_METHOD]
+    if ReceiveMethod.cash.value in receive_method:
+        context.user_data[USER_DATA_KEY][DESTINATION_CITY] = (
+            f"Город получателя: {destination}"
+        )
+        await approve_user_request(update, context, USER_DATA_KEY)
+        return APPROVE
     context.user_data[USER_DATA_KEY][DESTINATION_CITY] = (
-        f"Город получателя: {update.message.text.strip().capitalize()}"
+        f"Страна получателя: {destination}"
     )
-
-    await approve_user_request(update, context, USER_DATA_KEY)
-    return APPROVE
+    await update.message.reply_text(
+        "Выберите тип получателя",
+        reply_markup=build_inline_keyboard(RecipientType, rows=1),
+    )
+    return RECIPIENT_TYPE
 
 
 async def abroad_recipient_type(

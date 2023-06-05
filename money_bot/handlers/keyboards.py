@@ -44,7 +44,6 @@ def build_inline_keyboard(
     if include_names:
         # keep include names order
         enums = [getattr(buttons_enum, name) for name in include_names]
-        print('enums', enums)
     elif exclude_names:
         enums = filter(
             lambda item: item.name not in exclude_names, buttons_enum
