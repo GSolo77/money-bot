@@ -34,7 +34,7 @@ jobs:
         passphrase: ${{ secrets.PASSPHRASE }}
         script: |
           echo "Cloning latest changes"
-          [ -d "money-bot" ] || git clone git@github.com:WannaFight/money-bot.git
+          [ -d "money-bot" ] || git clone git@github.com:GSolo77/money-bot.git
           cd money-bot
           git pull origin master
           echo "Build and start"
