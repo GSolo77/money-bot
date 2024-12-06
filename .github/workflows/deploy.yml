@@ -22,6 +22,7 @@ jobs:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.KEY }}
+        passphrase: ${{ secrets.PASSPHRASE}}
         source: ".env"
         target: money-bot/money_bot
     - name: Build service and start service
@@ -30,6 +31,7 @@ jobs:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.KEY }}
+        passphrase: ${{ secrets.PASSPHRASE}}
         script: |
           echo "Cloning latest changes"
           [ -d "money-bot" ] || git clone git@github.com:GSolo77/money-bot.git
