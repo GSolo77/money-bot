@@ -93,7 +93,7 @@ async def give(
             f"Отдаете: {ExchangeCrypto.value_of(query.data)}"
         )
 
-        if query.data in (ExchangeCrypto.usdc.name, ExchangeCrypto.usdt.name):
+        if query.data in (ExchangeCrypto.usdt.name):
             await query.edit_message_text(
                 "Выберите сеть",
                 reply_markup=build_inline_keyboard(ExchangeNetwork, rows=2),
@@ -109,19 +109,6 @@ async def give(
         context.user_data[USER_DATA_KEY][GIVE] = (
             f"Отдаете: {ExchangeCurrency.value_of(query.data)}"
         )
-        if query.data == ExchangeCurrency.rub.name:
-            await query.edit_message_text(
-                "Выберите способ",
-                reply_markup=build_inline_keyboard(
-                    PayMethod,
-                    rows=2,
-                    include_names=[
-                        PayMethod.cash_moscow.name,
-                        PayMethod.bank.name,
-                    ],
-                ),
-            )
-            return RUB_METHOD
         await query.edit_message_text(
             "Получаете",
             reply_markup=build_inline_keyboard(ExchangeCrypto, rows=3),
@@ -138,26 +125,13 @@ async def receive(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
         context.user_data[USER_DATA_KEY][RECEIVE] = (
             f"Получаете: {ExchangeCurrency.value_of(query.data)}"
         )
-        if query.data == ExchangeCurrency.rub.name:
-            await query.edit_message_text(
-                "Выберите способ",
-                reply_markup=build_inline_keyboard(
-                    PayMethod,
-                    rows=2,
-                    include_names=[
-                        PayMethod.cash_moscow.name,
-                        PayMethod.bank.name,
-                    ],
-                ),
-            )
-            return RUB_METHOD
     else:
         # crypto was chosen
         context.user_data[USER_DATA_KEY][RECEIVE] = (
             f"Получаете: {ExchangeCrypto.value_of(query.data)}"
         )
 
-        if query.data in (ExchangeCrypto.usdc.name, ExchangeCrypto.usdt.name):
+        if query.data in (ExchangeCrypto.usdt.name):
             await query.edit_message_text(
                 "Выберите сеть",
                 reply_markup=build_inline_keyboard(ExchangeNetwork, rows=2),
