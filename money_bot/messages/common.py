@@ -23,8 +23,6 @@ class MainButtons(StrEnumAsCallback):
 
 class PayMethod(StrEnumAsCallback):
     cash = "Наличные 💰"
-    cash_moscow = "Наличные в Москве 💰🇷🇺"
-    cash_minsk = "Наличные в Минске 💰🇧🇾"
     bank = "Банковский перевод 🏦"
 
 
