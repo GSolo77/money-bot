@@ -8,7 +8,7 @@ class ExchangeType(StrEnumAsCallback):
 
 class ExchangeCrypto(StrEnumAsCallback):
     usdt = "USDT"
-
+    other = "Другая"
 
 class ExchangeCurrency(StrEnumAsCallback):
     rub = "RUB 🇷🇺"
