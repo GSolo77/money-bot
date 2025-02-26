@@ -7,12 +7,7 @@ class ExchangeType(StrEnumAsCallback):
 
 
 class ExchangeCrypto(StrEnumAsCallback):
-    btc = "BTC"
     usdt = "USDT"
-    usdc = "USDC"
-    eth = "ETH"
-    xmr = "XMR"
-    bnb = "BNB"
 
 
 class ExchangeCurrency(StrEnumAsCallback):
@@ -28,7 +23,7 @@ class ExchangeNetwork(StrEnumAsCallback):
 
 
 EXCHANGE_INFO_MESSAGE = (
-    "Мы покупаем и продаем различные криптовалюты:\n"
-    " - за рубли: наличные в Москве/безналичные практически в любой банк\n"
-    " - за доллары: только наличные в Москве"
+    "Мы покупаем и продаем USDT и другие криптовалюты:\n"
+    " - за наличные рубли\n"
+    " - за наличные доллары"
 )
