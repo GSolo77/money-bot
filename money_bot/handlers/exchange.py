@@ -23,7 +23,7 @@ NETWORK = 'EXCHANGE_NETWORK'
 APPROVE = 'EXCHANGE_APPROVE'
 GIVE = 'EXCHANGE_GIVE'
 RECEIVE = 'EXCHANGE_RECEIVE'
-RUB_METHOD = 'EXCHANGE_RUB_METHOD'
+#RUB_METHOD = 'EXCHANGE_RUB_METHOD'
 
 
 def _giveaway_keyboard(query_data: str) -> InlineKeyboardMarkup:
@@ -212,7 +212,7 @@ exchange_conv = ConversationHandler(
         GIVE: [CallbackQueryHandler(give)],
         RECEIVE: [CallbackQueryHandler(receive)],
         NETWORK: [CallbackQueryHandler(network)],
-        RUB_METHOD: [CallbackQueryHandler(rub_method)],
+        #RUB_METHOD: [CallbackQueryHandler(rub_method)],
         APPROVE: [CallbackQueryHandler(exchange_approve)],
     },
     fallbacks=default_fallbacks,
