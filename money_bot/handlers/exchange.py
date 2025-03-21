@@ -148,23 +148,25 @@ async def receive(
     return APPROVE
 
 
-async def exchange_city(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
+async def exchange_city(
+    update: Update, 
+    context: ContextTypes.DEFAULT_TYPE
+) -> str:
     query = update.callback_query
     
-    # Ensure that query is not None
     if query is None:
         context.user_data[USER_DATA_KEY][CITY] = (
             f"Город: {update.message.text.strip().capitalize()}"
         )
         
         if _is_sell(context):
-            await update.message.reply_markup(None)
+            await update.message.edit_reply_markup(None)
             await approve_user_request(update, context, USER_DATA_KEY)
             return APPROVE
             
         await update.message.reply_text(
             "Получаете",
-            reply_markup=build_inline_keyboard(ExchangeCurrency, rows=1),
+            reply_markup=build_inline_keyboard(ExchangeCrypto, rows=2),
         )
         return RECEIVE
     
@@ -179,7 +181,7 @@ async def exchange_city(update: Update, context: ContextTypes.DEFAULT_TYPE) -> s
         
     await query.edit_message_text(
         "Получаете",
-        reply_markup=build_inline_keyboard(ExchangeCurrency, rows=1),
+        reply_markup=build_inline_keyboard(ExchangeCrypto, rows=2),
     )
     return RECEIVE
 
