@@ -29,14 +29,14 @@ RECEIVE = 'EXCHANGE_RECEIVE'
 
 def _giveaway_keyboard(query_data: str) -> InlineKeyboardMarkup:
     if query_data == ExchangeType.sell.name:
-        return build_inline_keyboard(ExchangeCrypto, rows=3)
-    return build_inline_keyboard(ExchangeCurrency, rows=2)
+        return build_inline_keyboard(ExchangeCrypto, rows=2)
+    return build_inline_keyboard(ExchangeCurrency, rows=1)
 
 
 def _receive_keyboard(query_data: str) -> InlineKeyboardMarkup:
     if query_data == ExchangeType.sell.name:
-        return build_inline_keyboard(ExchangeCurrency, rows=2)
-    return build_inline_keyboard(ExchangeCrypto, rows=3)
+        return build_inline_keyboard(ExchangeCurrency, rows=1)
+    return build_inline_keyboard(ExchangeCrypto, rows=2)
 
 
 def _is_sell(context: ContextTypes.DEFAULT_TYPE) -> bool:
@@ -103,21 +103,22 @@ async def give(
 
         await query.edit_message_text(
             "Получаете",
-            reply_markup=build_inline_keyboard(ExchangeCurrency, rows=2),
+            reply_markup=build_inline_keyboard(ExchangeCurrency, rows=1),
         )
     else:
         # curr was chosen
         context.user_data[USER_DATA_KEY][GIVE] = (
             f"Отдаете: {ExchangeCurrency.value_of(query.data)}"
         )
-        await query.edit_message_text(
-            "Получаете",
-            reply_markup=build_inline_keyboard(ExchangeCrypto, rows=3),
-        )
-    return RECEIVE
+        await query.edit_message_text("Введите Ваш город")
+        
+    return CITY
 
 
-async def receive(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
+async def receive(
+    update: Update, 
+    context: ContextTypes.DEFAULT_TYPE
+) -> str:
     query = update.callback_query
     await query.answer()
 
@@ -125,6 +126,10 @@ async def receive(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
         context.user_data[USER_DATA_KEY][RECEIVE] = (
             f"Получаете: {ExchangeCurrency.value_of(query.data)}"
         )
+        await query.edit_message_text("Введите Ваш город")
+        
+        return CITY
+        
     else:
         context.user_data[USER_DATA_KEY][RECEIVE] = (
             f"Получаете: {ExchangeCrypto.value_of(query.data)}"
@@ -137,14 +142,33 @@ async def receive(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
             )
             return NETWORK
 
-    await update.message.reply_text("Введите ваш город")
-    return CITY
-
-async def exchange_city(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
-    context.user_data[USER_DATA_KEY]['CITY'] = f"Город: {update.message.text.strip().capitalize()}"
+    await query.edit_message_reply_markup(None)
     await approve_user_request(update, context, USER_DATA_KEY)
     return APPROVE
 
+async def exchange_city(
+    update: Update, 
+    context: ContextTypes.DEFAULT_TYPE
+) -> str:
+    query = update.callback_query
+    await query.answer()
+    
+    context.user_data[USER_DATA_KEY][CITY] = (
+        f"Город: {update.message.text.strip().capitalize()}"
+    )
+    
+    if _is_sell(context):
+        await query.edit_message_reply_markup(None)
+        await approve_user_request(update, context, USER_DATA_KEY)
+
+        return APPROVE
+        
+    await query.edit_message_text(
+        "Получаете",
+        reply_markup=build_inline_keyboard(ExchangeCurrency, rows=1),
+    )
+    return RECEIVE
+    
 async def network(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     query = update.callback_query
     await query.answer()
@@ -154,7 +178,7 @@ async def network(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
         context.user_data[USER_DATA_KEY][GIVE] += net_type
         await query.edit_message_text(
             "Получаете",
-            reply_markup=build_inline_keyboard(ExchangeCurrency, rows=2),
+            reply_markup=build_inline_keyboard(ExchangeCurrency, rows=1),
         )
         return RECEIVE
 
@@ -182,7 +206,7 @@ async def rub_method(
     context.user_data[USER_DATA_KEY][GIVE] += method
     await query.edit_message_text(
         "Получаете",
-        reply_markup=build_inline_keyboard(ExchangeCrypto, rows=3),
+        reply_markup=build_inline_keyboard(ExchangeCrypto, rows=2),
     )
     return RECEIVE
 
@@ -211,11 +235,11 @@ exchange_conv = ConversationHandler(
     ],
     states={
         TYPE: [CallbackQueryHandler(exchange_type)],
+        CITY: [CallbackQueryHandler(city)],
         GIVE: [CallbackQueryHandler(give)],
         RECEIVE: [CallbackQueryHandler(receive)],
         NETWORK: [CallbackQueryHandler(network)],
         #RUB_METHOD: [CallbackQueryHandler(rub_method)],
-        CITY: [MessageHandler(filters.TEXT & ~filters.COMMAND, exchange_city)],
         APPROVE: [CallbackQueryHandler(exchange_approve)],
     },
     fallbacks=default_fallbacks,
