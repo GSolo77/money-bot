@@ -237,7 +237,7 @@ exchange_conv = ConversationHandler(
     ],
     states={
         TYPE: [CallbackQueryHandler(exchange_type)],
-        CITY: [CallbackQueryHandler(exchange_city)],
+        CITY: [MessageHandler(filters.TEXT & ~filters.COMMAND, exchange_city)],
         GIVE: [CallbackQueryHandler(give)],
         RECEIVE: [CallbackQueryHandler(receive)],
         NETWORK: [CallbackQueryHandler(network)],
