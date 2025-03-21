@@ -12,6 +12,7 @@ from handlers.keyboards import MAIN_KEYBOARD, build_inline_keyboard, \
 from messages.common import MainButtons, PayMethod
 from messages.exchange import ExchangeType, ExchangeCurrency, \
     ExchangeNetwork, EXCHANGE_INFO_MESSAGE, ExchangeCrypto
+from services.filters import TEXT_NOT_CMND_NOR_BTN
 from services.utils import SLEEP_TIMEOUT, init_user_data, \
     approve_user_request, send_user_request_to_manager
 
@@ -154,19 +155,22 @@ async def exchange_city(
 ) -> str:
     query = update.callback_query
     
-    if query is None:
+    if query is None and update.message:
         context.user_data[USER_DATA_KEY][CITY] = (
             f"Город: {update.message.text.strip().capitalize()}"
         )
         
         if _is_sell(context):
-            await update.message.edit_reply_markup(None)
+            try:
+                await update.message.edit_reply_markup(None)
+            except telegram.error.BadRequest:
+                pass
             await approve_user_request(update, context, USER_DATA_KEY)
             return APPROVE
             
         await update.message.reply_text(
             "Получаете",
-            reply_markup=build_inline_keyboard(ExchangeCrypto, rows=2),
+            reply_markup=build_inline_keyboard(ExchangeCurrency, rows=1),
         )
         return RECEIVE
     
@@ -174,15 +178,16 @@ async def exchange_city(
         f"Город: {update.message.text.strip().capitalize()}"
     )
     
-    if _is_sell(context):
+    if _is_sell(context) and query:
         await query.edit_message_reply_markup(None)
         await approve_user_request(update, context, USER_DATA_KEY)
         return APPROVE
         
-    await query.edit_message_text(
-        "Получаете",
-        reply_markup=build_inline_keyboard(ExchangeCrypto, rows=2),
-    )
+    if query:
+        await query.edit_message_text(
+            "Получаете",
+            reply_markup=build_inline_keyboard(ExchangeCurrency, rows=1),
+        )
     return RECEIVE
 
 
@@ -252,7 +257,7 @@ exchange_conv = ConversationHandler(
     ],
     states={
         TYPE: [CallbackQueryHandler(exchange_type)],
-        CITY: [MessageHandler(filters.TEXT & ~filters.COMMAND, exchange_city)],
+        CITY: [MessageHandler(TEXT_NOT_CMND_NOR_BTN, exchange_city)],
         GIVE: [CallbackQueryHandler(give)],
         RECEIVE: [CallbackQueryHandler(receive)],
         NETWORK: [CallbackQueryHandler(network)],
