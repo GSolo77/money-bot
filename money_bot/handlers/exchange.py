@@ -170,7 +170,7 @@ async def exchange_city(
             
         await update.message.reply_text(
             "Получаете",
-            reply_markup=build_inline_keyboard(ExchangeCurrency, rows=1),
+            reply_markup=build_inline_keyboard(ExchangeCrypto, rows=2),
         )
         return RECEIVE
     
@@ -186,7 +186,7 @@ async def exchange_city(
     if query:
         await query.edit_message_text(
             "Получаете",
-            reply_markup=build_inline_keyboard(ExchangeCurrency, rows=1),
+            reply_markup=build_inline_keyboard(ExchangeCrypto, rows=2),
         )
     return RECEIVE
 
