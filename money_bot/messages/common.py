@@ -23,7 +23,7 @@ class MainButtons(StrEnumAsCallback):
 
 class PayMethod(StrEnumAsCallback):
     cash = "Наличные 💰"
-
+    bank = "Банковский перевод 🏦"
 
 class ApprovalButtons(StrEnumAsCallback):
     approve = "✅"
