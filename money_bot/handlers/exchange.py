@@ -144,6 +144,7 @@ async def receive(
 
     await query.edit_message_reply_markup(None)
     await approve_user_request(update, context, USER_DATA_KEY)
+    
     return APPROVE
 
 async def exchange_city(
