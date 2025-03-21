@@ -56,7 +56,6 @@ async def exchange(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
         "Выберите тип операции",
         reply_markup=build_inline_keyboard(ExchangeType, rows=2),
     )
-
     return TYPE
 
 
@@ -77,7 +76,6 @@ async def exchange_type(
         "Отдаете",
         reply_markup=_giveaway_keyboard(query.data),
     )
-
     return GIVE
 
 
@@ -105,6 +103,8 @@ async def give(
             "Получаете",
             reply_markup=build_inline_keyboard(ExchangeCurrency, rows=1),
         )
+        return RECEIVE
+        
     else:
         # curr was chosen
         context.user_data[USER_DATA_KEY][GIVE] = (
@@ -112,7 +112,7 @@ async def give(
         )
         await query.edit_message_text("Введите Ваш город")
         
-    return CITY
+        return CITY
 
 
 async def receive(
@@ -147,6 +147,7 @@ async def receive(
     
     return APPROVE
 
+
 async def exchange_city(
     update: Update, 
     context: ContextTypes.DEFAULT_TYPE
@@ -169,7 +170,8 @@ async def exchange_city(
         reply_markup=build_inline_keyboard(ExchangeCurrency, rows=1),
     )
     return RECEIVE
-    
+
+
 async def network(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     query = update.callback_query
     await query.answer()
