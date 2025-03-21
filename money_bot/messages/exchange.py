@@ -8,6 +8,8 @@ class ExchangeType(StrEnumAsCallback):
 
 class ExchangeCrypto(StrEnumAsCallback):
     usdt = "USDT"
+    btc = "BTC"
+    eth = "ETH"
     other = "Другая"
 
 class ExchangeCurrency(StrEnumAsCallback):
