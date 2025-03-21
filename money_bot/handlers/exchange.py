@@ -156,7 +156,6 @@ async def exchange_city(
     context.user_data[USER_DATA_KEY][CITY] = (
         f"Город: {update.message.text.strip().capitalize()}"
     )
-    await query.answer()
     
     if _is_sell(context):
         await query.edit_message_reply_markup(None)
