@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 USER_DATA_KEY = 'exchange_request'
 TYPE = 'EXCHANGE_TYPE'
 NETWORK = 'EXCHANGE_NETWORK'
+CITY = 'EXCHANGE_CITY'
 APPROVE = 'EXCHANGE_APPROVE'
 GIVE = 'EXCHANGE_GIVE'
 RECEIVE = 'EXCHANGE_RECEIVE'
@@ -121,12 +122,10 @@ async def receive(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     await query.answer()
 
     if _is_sell(context):
-        # curr was chosen
         context.user_data[USER_DATA_KEY][RECEIVE] = (
             f"Получаете: {ExchangeCurrency.value_of(query.data)}"
         )
     else:
-        # crypto was chosen
         context.user_data[USER_DATA_KEY][RECEIVE] = (
             f"Получаете: {ExchangeCrypto.value_of(query.data)}"
         )
@@ -138,10 +137,13 @@ async def receive(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
             )
             return NETWORK
 
-    await query.edit_message_reply_markup(None)
+    await update.message.reply_text("Введите ваш город")
+    return CITY
+
+async def exchange_city(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
+    context.user_data[USER_DATA_KEY]['CITY'] = f"Город: {update.message.text.strip().capitalize()}"
     await approve_user_request(update, context, USER_DATA_KEY)
     return APPROVE
-
 
 async def network(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     query = update.callback_query
@@ -213,6 +215,7 @@ exchange_conv = ConversationHandler(
         RECEIVE: [CallbackQueryHandler(receive)],
         NETWORK: [CallbackQueryHandler(network)],
         #RUB_METHOD: [CallbackQueryHandler(rub_method)],
+        CITY: [MessageHandler(filters.TEXT & ~filters.COMMAND, exchange_city)],
         APPROVE: [CallbackQueryHandler(exchange_approve)],
     },
     fallbacks=default_fallbacks,
