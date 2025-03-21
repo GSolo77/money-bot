@@ -22,8 +22,7 @@ class MainButtons(StrEnumAsCallback):
 
 
 class PayMethod(StrEnumAsCallback):
-    cash_rub = "Наличные Рубли"
-    cash_usd = "Наличные Доллары"
+    cash = "Наличные 💰"
 
 
 class ApprovalButtons(StrEnumAsCallback):
