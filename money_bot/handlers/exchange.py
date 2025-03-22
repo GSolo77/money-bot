@@ -161,10 +161,6 @@ async def exchange_city(
         )
         
         if _is_sell(context):
-            try:
-                await update.message.edit_reply_markup(None)
-            except telegram.error.BadRequest:
-                pass
             await approve_user_request(update, context, USER_DATA_KEY)
             return APPROVE
             
